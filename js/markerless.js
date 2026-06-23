@@ -101,24 +101,33 @@
     startBtn.addEventListener('click', async function () {
       if (started) return;
       log('แตะเริ่ม...');
+
+      // ⚠️ สำคัญบน iOS Safari: ต้อง "เริ่ม" ขอกล้องเป็นอันดับแรกสุด ห้ามมี await มาคั่นก่อน
+      //    (ถ้า await อย่างอื่นก่อน การแตะจะหมดอายุ แล้วกล้องจะเปิดไม่ได้)
+      let camPromise = null, camInitErr = null;
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name: 'Unsupported' };
+        camPromise = navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } }, audio: false,
+        });
+      } catch (e) { camInitErr = e; }
+
+      // เริ่มขอสิทธิ์เซ็นเซอร์ในจังหวะแตะเดียวกัน (ยังไม่ await)
+      let orientPromise = null;
+      try {
+        if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          orientPromise = DeviceOrientationEvent.requestPermission();
+        }
+      } catch (e) { log('เริ่มขอสิทธิ์เซ็นเซอร์ไม่ได้: ' + e); }
+
       hide(intro);
       show(loading);
 
-      // 1) ขอสิทธิ์เซ็นเซอร์ทิศทาง (iOS 13+ ต้องขอในจังหวะแตะ)
-      try {
-        if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
-          const p = await DeviceOrientationEvent.requestPermission();
-          log('สิทธิ์เซ็นเซอร์: ' + p);
-        }
-      } catch (e) { log('ขอสิทธิ์เซ็นเซอร์ไม่ได้: ' + e); }
-
-      // 2) ขอกล้องหลัง
+      // กล้อง (รอผลทีหลังได้ เพราะเริ่มไปแล้วในจังหวะแตะ)
       let stream;
       try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name: 'Unsupported' };
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } }, audio: false,
-        });
+        if (camInitErr) throw camInitErr;
+        stream = await camPromise;
       } catch (err) {
         log('✗ กล้อง: ' + (err && (err.name + ' ' + (err.message || ''))));
         hide(loading); show(intro); showCameraError(err);
@@ -128,6 +137,12 @@
       camera.srcObject = stream;
       try { await camera.play(); } catch (e) {}
       log('✓ กล้องเปิดแล้ว');
+
+      // สิทธิ์เซ็นเซอร์ทิศทาง (best-effort ไม่ขวางกล้อง)
+      if (orientPromise) {
+        try { const p = await orientPromise; log('สิทธิ์เซ็นเซอร์: ' + p); }
+        catch (e) { log('สิทธิ์เซ็นเซอร์ error: ' + e); }
+      }
 
       // 3) เล่นคลิป ผอ.
       clip.muted = !cfg.sound;
