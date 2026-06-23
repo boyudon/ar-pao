@@ -120,6 +120,15 @@
         }
       } catch (e) { log('เริ่มขอสิทธิ์เซ็นเซอร์ไม่ได้: ' + e); }
 
+      // ปลดล็อก+เล่นคลิป "พร้อมเสียง" ในจังหวะแตะ (สำคัญบน iOS ไม่งั้นจะเล่นแบบเงียบ)
+      clip.muted = !cfg.sound;
+      var clipPlay = clip.play();
+      if (clipPlay && clipPlay.catch) {
+        clipPlay.catch(function () {           // ถ้าเล่นพร้อมเสียงไม่ได้ อย่างน้อยให้ภาพเล่น
+          clip.muted = true; clip.play().catch(function () {});
+        });
+      }
+
       hide(intro);
       show(loading);
 
@@ -144,10 +153,7 @@
         catch (e) { log('สิทธิ์เซ็นเซอร์ error: ' + e); }
       }
 
-      // 3) เล่นคลิป ผอ.
-      clip.muted = !cfg.sound;
-      try { await clip.play(); }
-      catch (e) { clip.muted = true; try { await clip.play(); } catch (e2) {} }
+      // คลิปถูกสั่งเล่นไปแล้วในจังหวะแตะ — แค่ปรับระนาบให้พอดี
       applyPlane();
       log('✓ คลิปเริ่มเล่น (เสียง: ' + (!clip.muted) + ')');
 

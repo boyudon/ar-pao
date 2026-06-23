@@ -3,6 +3,14 @@
  *  (chroma key) ของวิดีโอ ให้เห็นเฉพาะตัวท่าน ผอ.
  *  ใช้งานเมื่อ AR_CONFIG.chromaKey = true
  * ========================================================== */
+function hexToRgb01(hex) {
+  hex = String(hex || '').trim().replace('#', '');
+  if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  var n = parseInt(hex, 16);
+  if (isNaN(n) || hex.length !== 6) return [0.149, 0.733, 0.216]; // #26bb37 fallback
+  return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
 AFRAME.registerComponent('chromakey-material', {
   schema: {
     src:        { type: 'selector' },
@@ -20,14 +28,16 @@ AFRAME.registerComponent('chromakey-material', {
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
 
-    const c = new THREE.Color(this.data.color);
+    // อ่านสีคีย์เป็นค่า sRGB ดิบ (0–1) ตรง ๆ จาก hex
+    // (ไม่ใช้ THREE.Color เพราะ colorManagement จะแปลงเป็น linear ทำให้คีย์เพี้ยน)
+    const c = hexToRgb01(this.data.color);
 
     const material = new THREE.ShaderMaterial({
       transparent: true,
       side: THREE.DoubleSide,
       uniforms: {
         map:        { value: texture },
-        keyColor:   { value: new THREE.Vector3(c.r, c.g, c.b) },
+        keyColor:   { value: new THREE.Vector3(c[0], c[1], c[2]) },
         similarity: { value: this.data.similarity },
         smoothness: { value: this.data.smoothness },
       },
