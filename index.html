@@ -5,6 +5,44 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>AR — ข้อมูลโดยท่าน ผอ.</title>
 
+  <!-- ตัวจับ/แสดงข้อผิดพลาดบนหน้าจอ (ไว้วินิจฉัยปัญหาบนมือถือ) -->
+  <script>
+    (function () {
+      window.__ARERR = [];
+      function render() {
+        if (!document.body) { return; }
+        var d = document.getElementById('ar-debug');
+        if (!d) {
+          d = document.createElement('div');
+          d.id = 'ar-debug';
+          d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
+            'background:rgba(170,0,0,.92);color:#fff;font:12px/1.45 monospace;' +
+            'padding:8px 10px;max-height:42vh;overflow:auto;white-space:pre-wrap;';
+          document.body.appendChild(d);
+        }
+        d.textContent = '⚠️ DEBUG (ส่งข้อความนี้ให้ผู้ดูแล)\n' + window.__ARERR.join('\n');
+      }
+      window.__arlog = function (m) { window.__ARERR.push(String(m)); render(); };
+      window.addEventListener('error', function (e) {
+        window.__arlog('JS: ' + (e.message || '') + ' @' +
+          String(e.filename || '').split('/').pop() + ':' + (e.lineno || ''));
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        var r = e.reason;
+        window.__arlog('PROMISE: ' + (r && (r.name + ' ' + (r.message || r)) || r));
+      });
+      document.addEventListener('DOMContentLoaded', function () {
+        if (typeof AFRAME === 'undefined') window.__arlog('AFRAME ไม่โหลด — CDN อาจถูกบล็อก/เน็ตมีปัญหา');
+        if (typeof window.MINDAR === 'undefined' && !(window.AFRAME && AFRAME.systems && AFRAME.systems['mindar-image-system']))
+          window.__arlog('MindAR อาจไม่โหลด');
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
+          window.__arlog('เบราว์เซอร์นี้ไม่รองรับ getUserMedia (เปิดกล้องไม่ได้)');
+        if (!window.isSecureContext) window.__arlog('ไม่ใช่ secure context (ต้องเปิดผ่าน HTTPS)');
+        window.__arlog('UA: ' + navigator.userAgent);
+      });
+    })();
+  </script>
+
   <!-- A-Frame + MindAR (Image Tracking) -->
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -82,6 +120,7 @@
     color-space="sRGB"
     embedded
     renderer="colorManagement: true; physicallyCorrectLights: true"
+    loading-screen="enabled: false"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false">
 

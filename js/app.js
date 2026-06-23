@@ -82,6 +82,7 @@
     let started = false;
     startBtn.addEventListener('click', async function () {
       if (started) return;
+      if (window.__arlog) window.__arlog('แตะปุ่มเริ่ม → กำลังขอสิทธิ์กล้อง...');
       hide(intro);
       show(loading);
 
@@ -92,7 +93,9 @@
         }
         const test = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         test.getTracks().forEach(function (t) { t.stop(); });
+        if (window.__arlog) window.__arlog('✓ ได้สิทธิ์กล้องแล้ว → กำลังเริ่มระบบ AR');
       } catch (err) {
+        if (window.__arlog) window.__arlog('✗ ขอกล้องไม่สำเร็จ: ' + (err && (err.name + ' ' + (err.message || ''))));
         hide(loading);
         show(intro);
         showCameraError(err);
