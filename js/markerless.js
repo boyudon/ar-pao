@@ -1,18 +1,37 @@
 /* ============================================================
- *  markerless.js — โหมด AR ไม่ต้องส่องป้าย
- *  สแกน QR → เปิดกล้อง → คลิป ผอ. ลอยทับภาพกล้องทันที
- *  (chromaKey: true = ตัดฉากเขียวออก ให้เห็น ผอ. ยืนลอยในห้องจริง)
+ *  markerless.js — โหมด AR ไม่ต้องส่องป้าย (เกาะโลกจริงด้วยไจโร)
+ *  สแกน QR → เปิดกล้อง → คลิป ผอ. เกาะตำแหน่งในห้อง
+ *  หมุน/ส่ายมือถือ → มอง ผอ. ได้รอบทิศ (3DOF)
+ *  chromaKey: true = ตัดฉากเขียวออก ให้เห็น ผอ. ยืนลอยในห้องจริง
  * ========================================================== */
 (function () {
+  // คอมโพเนนต์: ให้ระนาบหันเข้าหากล้องเสมอ (เฉพาะแกนแนวนอน)
+  if (typeof AFRAME !== 'undefined' && !AFRAME.components['billboard-yaw']) {
+    AFRAME.registerComponent('billboard-yaw', {
+      tick: function () {
+        var cam = this.el.sceneEl && this.el.sceneEl.camera;
+        if (!cam) return;
+        var obj = this.el.object3D;
+        var cw = new THREE.Vector3(), ow = new THREE.Vector3();
+        cam.getWorldPosition(cw);
+        obj.getWorldPosition(ow);
+        obj.rotation.set(0, Math.atan2(cw.x - ow.x, cw.z - ow.z), 0);
+      },
+    });
+  }
+
   const cfg = window.AR_CONFIG || {};
+  function log(m) { if (window.__arlog) window.__arlog(m); }
 
   document.addEventListener('DOMContentLoaded', function () {
-    const camera  = document.getElementById('camera');
-    const clip    = document.getElementById('clip');
-    const canvas  = document.getElementById('clip-canvas');
-    const intro   = document.getElementById('intro');
-    const loading = document.getElementById('loading');
-    const hint    = document.getElementById('hint');
+    const camera   = document.getElementById('camera');
+    const clip     = document.getElementById('clip');
+    const director = document.getElementById('director');
+    const plane    = document.getElementById('director-plane');
+    const camEl    = document.getElementById('cam');
+    const intro    = document.getElementById('intro');
+    const loading  = document.getElementById('loading');
+    const hint     = document.getElementById('hint');
     const startBtn = document.getElementById('start-btn');
 
     // ---- ข้อความ ----
@@ -27,27 +46,48 @@
     // ---- แหล่งวิดีโอคลิป ----
     if (cfg.videoSrc) clip.setAttribute('src', cfg.videoSrc);
 
-    // ---- ตำแหน่ง/ขนาดคลิปบนจอ ----
-    const clipCfg = cfg.clip || {};
-    const widthPct  = clipCfg.widthPercent != null ? clipCfg.widthPercent : 80;
-    const bottomPct = clipCfg.bottomPercent != null ? clipCfg.bottomPercent : 2;
-    const align = clipCfg.align || 'center';
-    [clip, canvas].forEach(function (el) {
-      el.style.width = widthPct + 'vw';
-      el.style.bottom = bottomPct + 'vh';
-      if (align === 'left') { el.style.left = '3vw'; }
-      else if (align === 'right') { el.style.right = '3vw'; }
-      else { el.style.left = '50%'; el.style.transform = 'translateX(-50%)'; }
-    });
+    // ---- การวางในโลกจริง ----
+    const w = cfg.world || {};
+    const dist = w.distanceMeters != null ? w.distanceMeters : 3;
+    const H    = w.heightMeters   != null ? w.heightMeters   : 1.9;
+    const yOff = w.yOffset        != null ? w.yOffset         : 0;
+    const centerY = yOff + H / 2;
+    director.setAttribute('position', '0 ' + centerY + ' ' + (-dist));
+    if (w.faceUser !== false) director.setAttribute('billboard-yaw', '');
 
-    // ใช้ canvas เมื่อเปิดโหมดตัดฉากเขียว
-    if (cfg.chromaKey) {
-      clip.classList.add('hidden');
-      canvas.classList.remove('hidden');
+    function applyPlane() {
+      const aspect = (clip.videoWidth && clip.videoHeight)
+        ? (clip.videoWidth / clip.videoHeight) : (9 / 16);
+      const width = H * aspect;
+      if (cfg.chromaKey) {
+        plane.removeAttribute('material');
+        plane.removeAttribute('geometry');
+        plane.setAttribute('chromakey-material',
+          'src: #clip;' +
+          ' color: ' + (cfg.chromaColor || '#00d400') + ';' +
+          ' similarity: ' + (cfg.chromaSimilarity != null ? cfg.chromaSimilarity : 0.4) + ';' +
+          ' smoothness: ' + (cfg.chromaSmoothness != null ? cfg.chromaSmoothness : 0.1) + ';' +
+          ' width: ' + width + '; height: ' + H);
+      } else {
+        plane.setAttribute('geometry', 'primitive: plane; width: ' + width + '; height: ' + H);
+        plane.setAttribute('material', 'shader: flat; src: #clip; transparent: true; side: double');
+      }
     }
-    clip.addEventListener('loadedmetadata', function () {
-      if (clip.videoWidth) { canvas.width = clip.videoWidth; canvas.height = clip.videoHeight; }
-    });
+    applyPlane();
+    clip.addEventListener('loadedmetadata', applyPlane);
+
+    // วาง ผอ. ไว้ "ตรงหน้า" ทิศที่มือถือชี้อยู่ตอนเริ่ม (หลังเซ็นเซอร์ทำงานแล้ว)
+    function placeInFront() {
+      if (!camEl || !camEl.object3D) return;
+      const q = camEl.object3D.quaternion;
+      const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
+      fwd.y = 0;
+      if (fwd.lengthSq() < 1e-6) { fwd.set(0, 0, -1); }
+      fwd.normalize();
+      director.setAttribute('position',
+        (fwd.x * dist) + ' ' + centerY + ' ' + (fwd.z * dist));
+      log('วาง ผอ. ตรงหน้าแล้ว');
+    }
 
     // ---- เตือนเบราว์เซอร์ที่ใช้ไม่ได้ ----
     if (isInAppBrowser()) {
@@ -60,11 +100,19 @@
     let started = false;
     startBtn.addEventListener('click', async function () {
       if (started) return;
-      if (window.__arlog) window.__arlog('แตะเริ่ม → กำลังขอกล้อง...');
+      log('แตะเริ่ม...');
       hide(intro);
       show(loading);
 
-      // 1) ขอกล้องหลัง
+      // 1) ขอสิทธิ์เซ็นเซอร์ทิศทาง (iOS 13+ ต้องขอในจังหวะแตะ)
+      try {
+        if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          const p = await DeviceOrientationEvent.requestPermission();
+          log('สิทธิ์เซ็นเซอร์: ' + p);
+        }
+      } catch (e) { log('ขอสิทธิ์เซ็นเซอร์ไม่ได้: ' + e); }
+
+      // 2) ขอกล้องหลัง
       let stream;
       try {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name: 'Unsupported' };
@@ -72,121 +120,29 @@
           video: { facingMode: { ideal: 'environment' } }, audio: false,
         });
       } catch (err) {
-        if (window.__arlog) window.__arlog('✗ กล้อง: ' + (err && (err.name + ' ' + (err.message || ''))));
+        log('✗ กล้อง: ' + (err && (err.name + ' ' + (err.message || ''))));
         hide(loading); show(intro); showCameraError(err);
         return;
       }
       started = true;
       camera.srcObject = stream;
       try { await camera.play(); } catch (e) {}
-      if (window.__arlog) window.__arlog('✓ กล้องเปิดแล้ว');
+      log('✓ กล้องเปิดแล้ว');
 
-      // 2) เล่นคลิป ผอ. (ปลดล็อกเสียงในจังหวะแตะ)
+      // 3) เล่นคลิป ผอ.
       clip.muted = !cfg.sound;
-      try {
-        await clip.play();
-      } catch (e) {
-        clip.muted = true;                 // ถ้าเล่นพร้อมเสียงไม่ได้ ให้เล่นแบบเงียบไปก่อน
-        try { await clip.play(); } catch (e2) {}
-      }
-      if (window.__arlog) window.__arlog('✓ คลิปเริ่มเล่น (เสียง: ' + (!clip.muted) + ')');
+      try { await clip.play(); }
+      catch (e) { clip.muted = true; try { await clip.play(); } catch (e2) {} }
+      applyPlane();
+      log('✓ คลิปเริ่มเล่น (เสียง: ' + (!clip.muted) + ')');
 
-      // 3) ตัดฉากเขียว (ถ้าเปิด)
-      if (cfg.chromaKey) startChroma();
+      // 4) วาง ผอ. ตรงหน้า หลังเซ็นเซอร์เริ่มทำงาน
+      setTimeout(placeInFront, 600);
 
       hide(loading);
       show(hint);
-      setTimeout(function () { hide(hint); }, 4500);
+      setTimeout(function () { hide(hint); }, 5000);
     });
-
-    // ================= WebGL chroma compositor =================
-    function startChroma() {
-      const gl = canvas.getContext('webgl', { premultipliedAlpha: false, alpha: true, antialias: true })
-              || canvas.getContext('experimental-webgl', { premultipliedAlpha: false, alpha: true });
-      if (!gl) {
-        if (window.__arlog) window.__arlog('⚠️ ไม่มี WebGL — แสดงคลิปแบบสี่เหลี่ยมแทน');
-        canvas.classList.add('hidden'); clip.classList.remove('hidden');
-        return;
-      }
-
-      const vs = 'attribute vec2 p; varying vec2 vUv;' +
-        'void main(){ vUv = p*0.5+0.5; gl_Position = vec4(p,0.0,1.0); }';
-      const fs =
-        'precision mediump float;' +
-        'uniform sampler2D map; uniform vec3 keyColor;' +
-        'uniform float similarity; uniform float smoothness; varying vec2 vUv;' +
-        'vec2 RGBtoUV(vec3 c){ return vec2(' +
-        '  c.r*-0.169 + c.g*-0.331 + c.b*0.5   + 0.5,' +
-        '  c.r*0.5    + c.g*-0.419 + c.b*-0.081 + 0.5 ); }' +
-        'void main(){' +
-        '  vec4 col = texture2D(map, vUv);' +
-        '  float d = distance(RGBtoUV(col.rgb), RGBtoUV(keyColor));' +
-        '  float a = smoothstep(similarity, similarity+smoothness, d);' +
-        '  gl_FragColor = vec4(col.rgb, col.a*a);' +
-        '}';
-
-      const prog = makeProgram(gl, vs, fs);
-      if (!prog) { canvas.classList.add('hidden'); clip.classList.remove('hidden'); return; }
-      gl.useProgram(prog);
-
-      const buf = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-      const loc = gl.getAttribLocation(prog, 'p');
-      gl.enableVertexAttribArray(loc);
-      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-
-      const tex = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-
-      const c = hexToRgb(cfg.chromaColor || '#00d400');
-      gl.uniform3f(gl.getUniformLocation(prog, 'keyColor'), c[0], c[1], c[2]);
-      gl.uniform1f(gl.getUniformLocation(prog, 'similarity'), cfg.chromaSimilarity != null ? cfg.chromaSimilarity : 0.4);
-      gl.uniform1f(gl.getUniformLocation(prog, 'smoothness'), cfg.chromaSmoothness != null ? cfg.chromaSmoothness : 0.1);
-      gl.clearColor(0, 0, 0, 0);
-
-      function frame() {
-        if (clip.readyState >= 2 && clip.videoWidth) {
-          if (canvas.width !== clip.videoWidth) {
-            canvas.width = clip.videoWidth; canvas.height = clip.videoHeight;
-          }
-          gl.viewport(0, 0, canvas.width, canvas.height);
-          try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, clip); } catch (e) {}
-          gl.clear(gl.COLOR_BUFFER_BIT);
-          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        }
-        requestAnimationFrame(frame);
-      }
-      frame();
-    }
-
-    function makeProgram(gl, vsSrc, fsSrc) {
-      function sh(type, src) {
-        const s = gl.createShader(type);
-        gl.shaderSource(s, src); gl.compileShader(s);
-        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-          if (window.__arlog) window.__arlog('shader error: ' + gl.getShaderInfoLog(s));
-          return null;
-        }
-        return s;
-      }
-      const v = sh(gl.VERTEX_SHADER, vsSrc), f = sh(gl.FRAGMENT_SHADER, fsSrc);
-      if (!v || !f) return null;
-      const p = gl.createProgram();
-      gl.attachShader(p, v); gl.attachShader(p, f); gl.linkProgram(p);
-      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return null;
-      return p;
-    }
-
-    function hexToRgb(hex) {
-      const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || '');
-      return m ? [parseInt(m[1],16)/255, parseInt(m[2],16)/255, parseInt(m[3],16)/255] : [0, 0.83, 0];
-    }
 
     // ================= helpers =================
     function setText(id, txt) {
