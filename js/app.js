@@ -58,17 +58,21 @@
     if (video.readyState >= 1) applyPlane();
 
     // ---- เหตุการณ์ของ MindAR ----
+    let arReady = false;
     sceneEl.addEventListener('arReady', function () {
+      arReady = true;
+      if (window.__arlog) window.__arlog('✓ AR พร้อม (arReady) — เล็งกล้องไปที่การ์ดได้เลย');
       hide(loading);
       show(scanHint);
     });
     sceneEl.addEventListener('arError', function () {
+      if (window.__arlog) window.__arlog('✗ arError — ระบบ AR เริ่มไม่สำเร็จ');
       hide(loading);
       show(intro);
-      alert('ไม่สามารถเริ่มกล้อง/ระบบ AR ได้ กรุณาเปิดผ่าน HTTPS และอนุญาตการใช้กล้อง');
     });
 
     target.addEventListener('targetFound', function () {
+      if (window.__arlog) window.__arlog('🎯 พบเป้าหมาย! กำลังเล่นวิดีโอ');
       hide(scanHint);
       if (!planeReady) applyPlane();
       video.play().catch(function () {});
@@ -111,7 +115,17 @@
       // 3) เริ่มระบบ AR
       function startSystem() {
         const sys = sceneEl.systems['mindar-image-system'];
-        if (sys) { sys.start(); }
+        if (!sys) {
+          if (window.__arlog) window.__arlog('✗ ไม่พบ mindar-image-system (MindAR ไม่โหลด?)');
+          return;
+        }
+        if (window.__arlog) window.__arlog('เรียก start ระบบ AR แล้ว...');
+        sys.start();
+        setTimeout(function () {
+          if (!arReady && window.__arlog) {
+            window.__arlog('⚠️ AR ยังไม่พร้อมใน 10 วิ — ถ้าใช้ Chrome บน iPhone แนะนำให้เปิดด้วย Safari แทน');
+          }
+        }, 10000);
       }
       if (sceneEl.hasLoaded) startSystem();
       else sceneEl.addEventListener('loaded', startSystem, { once: true });
