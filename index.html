@@ -22,7 +22,13 @@
         }
         d.textContent = '⚠️ DEBUG (ส่งข้อความนี้ให้ผู้ดูแล)\n' + window.__ARERR.join('\n');
       }
-      window.__arlog = function (m) { window.__ARERR.push(String(m)); render(); };
+      var DEBUG = /[?&]debug=1/.test(location.search || '');
+      window.__arlog = function (m) {
+        try { console.log('[AR]', m); } catch (e) {}
+        if (!DEBUG) { return; }            // โชว์แถบแดงเฉพาะเมื่อเปิดด้วย ?debug=1
+        window.__ARERR.push(String(m));
+        render();
+      };
       window.addEventListener('error', function (e) {
         window.__arlog('JS: ' + (e.message || '') + ' @' +
           String(e.filename || '').split('/').pop() + ':' + (e.lineno || ''));

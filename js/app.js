@@ -23,8 +23,12 @@
     setText('scan-text', ui.scanText);
     setText('loading-text', ui.loadingText);
 
-    // ---- เตือนถ้าเปิดผ่านแอป (LINE/FB ฯลฯ) ที่มักเปิดกล้องไม่ได้ ----
-    if (isInAppBrowser()) showInAppWarning();
+    // ---- เตือนถ้าเปิดผ่านเบราว์เซอร์ที่ใช้ AR ไม่ได้ ----
+    if (isInAppBrowser()) {
+      showBrowserWarning('⚠️ คุณกำลังเปิดผ่านแอป (เช่น LINE) ซึ่งมักเปิดกล้องไม่ได้<br>แตะปุ่ม ⋯ มุมขวาบน แล้วเลือก <b>“เปิดในเบราว์เซอร์”</b> (Safari/Chrome)');
+    } else if (isIosNonSafari()) {
+      showBrowserWarning('⚠️ บน iPhone กรุณาเปิดด้วย <b>Safari</b> เท่านั้น<br>(Chrome/แอปอื่นบน iPhone ใช้ AR ไม่ได้) — แตะปุ่ม <b>แชร์</b> ↗ แล้วเลือก <b>“เปิดในแอป Safari”</b>');
+    }
 
     // ---- ปรับขนาด/วัสดุของวิดีโอให้พอดีกับเป้าหมาย ----
     let planeReady = false;
@@ -149,16 +153,27 @@
       return /Line\/|FBAN|FBAV|FB_IAB|Instagram|Messenger|MicroMessenger|TikTok|Snapchat|GSA|Twitter/i.test(ua);
     }
 
-    function showInAppWarning() {
+    function isIos() {
+      return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+    // iPhone/iPad ที่ไม่ใช่ Safari (Chrome/Firefox/Edge บน iOS ใช้ WebAR ไม่ได้)
+    function isIosNonSafari() {
+      return isIos() && /CriOS|FxiOS|EdgiOS|OPiOS|mercury|YaBrowser|DuckDuckGo/i.test(navigator.userAgent);
+    }
+
+    function showBrowserWarning(html) {
+      if (document.getElementById('browser-warn')) return;
       const box = document.createElement('div');
+      box.id = 'browser-warn';
       box.style.cssText = 'margin-top:18px;background:rgba(255,90,90,.18);border:1px solid rgba(255,150,150,.6);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.55;max-width:330px;';
-      box.innerHTML = '⚠️ คุณกำลังเปิดผ่านแอป (เช่น LINE) ซึ่งมักเปิดกล้องไม่ได้<br>แตะปุ่ม ⋯ มุมขวาบน แล้วเลือก <b>“เปิดในเบราว์เซอร์”</b> (Safari/Chrome)';
+      box.innerHTML = html;
       const btn = document.createElement('button');
       btn.textContent = 'คัดลอกลิงก์';
       btn.style.cssText = 'display:block;margin:12px auto 0;font-family:inherit;font-size:14px;font-weight:700;color:#0b1f3a;background:#fff;border:none;border-radius:999px;padding:8px 20px;cursor:pointer;';
       btn.addEventListener('click', function () {
         if (navigator.clipboard) navigator.clipboard.writeText(location.href).catch(function () {});
-        btn.textContent = 'คัดลอกแล้ว ✓ ไปวางใน Safari/Chrome';
+        btn.textContent = 'คัดลอกแล้ว ✓';
       });
       box.appendChild(btn);
       intro.appendChild(box);
@@ -168,7 +183,6 @@
       let msg;
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || (err && err.name === 'Unsupported')) {
         msg = 'เบราว์เซอร์นี้ไม่รองรับการเปิดกล้อง — มักเกิดจากเปิดผ่านแอป (LINE/Facebook) กรุณาเปิดลิงก์นี้ใน Safari หรือ Chrome';
-        if (!document.getElementById('cam-error') && !isInAppBrowser()) showInAppWarning();
       } else if (!isSecureCtx()) {
         msg = 'ต้องเปิดผ่าน HTTPS เท่านั้น (ลิงก์ GitHub Pages เป็น https อยู่แล้ว)';
       } else {
