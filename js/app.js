@@ -23,6 +23,9 @@
     setText('scan-text', ui.scanText);
     setText('loading-text', ui.loadingText);
 
+    // ---- เตือนถ้าเปิดผ่านแอป (LINE/FB ฯลฯ) ที่มักเปิดกล้องไม่ได้ ----
+    if (isInAppBrowser()) showInAppWarning();
+
     // ---- ปรับขนาด/วัสดุของวิดีโอให้พอดีกับเป้าหมาย ----
     let planeReady = false;
     function applyPlane() {
@@ -79,15 +82,30 @@
     let started = false;
     startBtn.addEventListener('click', async function () {
       if (started) return;
-      started = true;
-
       hide(intro);
       show(loading);
 
-      // ปลดล็อกการเล่นวิดีโอ (โดยเฉพาะเสียงบนมือถือ)
+      // 1) ขอสิทธิ์กล้องเองก่อน (ใกล้กับการแตะที่สุด) เพื่อรู้สาเหตุชัดเจนถ้าเปิดไม่ได้
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw { name: 'Unsupported' };
+        }
+        const test = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        test.getTracks().forEach(function (t) { t.stop(); });
+      } catch (err) {
+        hide(loading);
+        show(intro);
+        showCameraError(err);
+        return;
+      }
+
+      started = true;
+
+      // 2) ปลดล็อกการเล่นวิดีโอ (โดยเฉพาะเสียงบนมือถือ)
       video.muted = !cfg.sound;
       try { await video.play(); video.pause(); video.currentTime = 0; } catch (e) {}
 
+      // 3) เริ่มระบบ AR
       function startSystem() {
         const sys = sceneEl.systems['mindar-image-system'];
         if (sys) { sys.start(); }
@@ -103,5 +121,61 @@
     }
     function hide(el) { if (el) el.classList.add('hidden'); }
     function show(el) { if (el) el.classList.remove('hidden'); }
+
+    function isSecureCtx() {
+      return window.isSecureContext ||
+        location.protocol === 'https:' || location.hostname === 'localhost';
+    }
+
+    function isInAppBrowser() {
+      const ua = navigator.userAgent || '';
+      return /Line\/|FBAN|FBAV|FB_IAB|Instagram|Messenger|MicroMessenger|TikTok|Snapchat|GSA|Twitter/i.test(ua);
+    }
+
+    function showInAppWarning() {
+      const box = document.createElement('div');
+      box.style.cssText = 'margin-top:18px;background:rgba(255,90,90,.18);border:1px solid rgba(255,150,150,.6);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.55;max-width:330px;';
+      box.innerHTML = '⚠️ คุณกำลังเปิดผ่านแอป (เช่น LINE) ซึ่งมักเปิดกล้องไม่ได้<br>แตะปุ่ม ⋯ มุมขวาบน แล้วเลือก <b>“เปิดในเบราว์เซอร์”</b> (Safari/Chrome)';
+      const btn = document.createElement('button');
+      btn.textContent = 'คัดลอกลิงก์';
+      btn.style.cssText = 'display:block;margin:12px auto 0;font-family:inherit;font-size:14px;font-weight:700;color:#0b1f3a;background:#fff;border:none;border-radius:999px;padding:8px 20px;cursor:pointer;';
+      btn.addEventListener('click', function () {
+        if (navigator.clipboard) navigator.clipboard.writeText(location.href).catch(function () {});
+        btn.textContent = 'คัดลอกแล้ว ✓ ไปวางใน Safari/Chrome';
+      });
+      box.appendChild(btn);
+      intro.appendChild(box);
+    }
+
+    function showCameraError(err) {
+      let msg;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || (err && err.name === 'Unsupported')) {
+        msg = 'เบราว์เซอร์นี้ไม่รองรับการเปิดกล้อง — มักเกิดจากเปิดผ่านแอป (LINE/Facebook) กรุณาเปิดลิงก์นี้ใน Safari หรือ Chrome';
+        if (!document.getElementById('cam-error') && !isInAppBrowser()) showInAppWarning();
+      } else if (!isSecureCtx()) {
+        msg = 'ต้องเปิดผ่าน HTTPS เท่านั้น (ลิงก์ GitHub Pages เป็น https อยู่แล้ว)';
+      } else {
+        switch (err && err.name) {
+          case 'NotAllowedError':
+          case 'SecurityError':
+            msg = 'ถูกปฏิเสธสิทธิ์กล้อง — กรุณาอนุญาตกล้องให้เว็บนี้ในการตั้งค่า แล้วลองใหม่'; break;
+          case 'NotFoundError':
+          case 'OverconstrainedError':
+            msg = 'ไม่พบกล้องหลังของเครื่อง'; break;
+          case 'NotReadableError':
+            msg = 'กล้องกำลังถูกใช้งานโดยแอปอื่น — ปิดแอปกล้อง/วิดีโอคอลแล้วลองใหม่'; break;
+          default:
+            msg = 'เปิดกล้องไม่สำเร็จ: ' + ((err && (err.name + ' ' + (err.message || ''))) || 'ไม่ทราบสาเหตุ');
+        }
+      }
+      let el = document.getElementById('cam-error');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'cam-error';
+        el.style.cssText = 'margin-top:16px;background:rgba(255,90,90,.2);border:1px solid rgba(255,150,150,.6);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.55;max-width:330px;';
+        intro.appendChild(el);
+      }
+      el.textContent = '⚠️ ' + msg;
+    }
   });
 })();
