@@ -4,10 +4,14 @@
 window.AR_CONFIG = {
 
   // ---- ไฟล์เป้าหมายภาพ (.mind) ที่คอมไพล์จาก compiler.html ----
-  targetSrc: "./assets/targets.mind",
+  // 🔴 ตอนนี้อยู่ใน "โหมด DEMO" ใช้การ์ดตัวอย่างของ MindAR
+  //    ใช้งานจริง: เปลี่ยนกลับเป็น  "./assets/targets.mind"
+  targetSrc: "https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind",
 
   // ---- วิดีโอท่าน ผอ. (ไฟล์ .mp4 H.264) ----
-  videoSrc: "./assets/director.mp4",
+  // 🔴 โหมด DEMO: วิดีโอตัวอย่าง (มีเสียง)
+  //    ใช้งานจริง: เปลี่ยนกลับเป็น  "./assets/director.mp4"
+  videoSrc: "https://cdn.jsdelivr.net/gh/mdn/learning-area@main/html/multimedia-and-embedding/video-and-audio-content/rabbit320.mp4",
 
   // ---- ขนาด/ตำแหน่งวิดีโอบนภาพเป้าหมาย ----
   // videoWidth = 1 หมายถึง กว้างเท่ากับภาพเป้าหมายพอดี
