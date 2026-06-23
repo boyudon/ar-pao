@@ -90,10 +90,11 @@
     }
 
     // ---- เตือนเบราว์เซอร์ที่ใช้ไม่ได้ ----
-    if (isInAppBrowser()) {
+    if (isIosNonSafari()) {
+      // Chrome/Firefox/Edge บน iPhone ใช้ AR ไม่ได้ → กั้นด้วยหน้าเต็มให้ไป Safari
+      showSafariGate();
+    } else if (isInAppBrowser()) {
       showBrowserWarning('⚠️ คุณกำลังเปิดผ่านแอป (เช่น LINE) ซึ่งมักเปิดกล้องไม่ได้<br>แตะปุ่ม ⋯ มุมขวาบน แล้วเลือก <b>“เปิดในเบราว์เซอร์”</b> (Safari/Chrome)');
-    } else if (isIosNonSafari()) {
-      showBrowserWarning('⚠️ บน iPhone กรุณาเปิดด้วย <b>Safari</b><br>แตะปุ่ม <b>แชร์</b> ↗ แล้วเลือก <b>“เปิดในแอป Safari”</b>');
     }
 
     // ---- ปุ่มเริ่ม ----
@@ -183,6 +184,35 @@
     function isInAppBrowser() {
       const ua = navigator.userAgent || '';
       return /Line\/|FBAN|FBAV|FB_IAB|Instagram|Messenger|MicroMessenger|TikTok|Snapchat|GSA|Twitter/i.test(ua);
+    }
+
+    // หน้าเต็ม: บังคับให้เปิดด้วย Safari (สำหรับ Chrome/เบราว์เซอร์อื่นบน iPhone)
+    function showSafariGate() {
+      if (document.getElementById('safari-gate')) return;
+      if (startBtn) startBtn.style.display = 'none';
+      const ic = document.querySelector('.icon-cam');
+      if (ic) ic.textContent = '🧭';
+      setText('app-title', 'กรุณาเปิดด้วย Safari');
+      setText('intro-text', 'แอป Chrome บน iPhone เปิดระบบ AR ไม่ได้ (ข้อจำกัดของ iOS) — โปรดเปิดลิงก์นี้ในแอป Safari');
+
+      const box = document.createElement('div');
+      box.id = 'safari-gate';
+      box.style.cssText = 'margin-top:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:14px;padding:16px;font-size:14px;line-height:1.7;max-width:340px;text-align:left;';
+      box.innerHTML =
+        '<b>วิธีเปิดใน Safari:</b><br>' +
+        '1. แตะปุ่ม <b>⋯</b> หรือ <b>แชร์</b> ↗ ของ Chrome<br>' +
+        '2. เลือก <b>“เปิดในเบราว์เซอร์ Safari”</b><br>' +
+        '<br>หรือกดปุ่มล่างนี้คัดลอกลิงก์ แล้วเปิดแอป <b>Safari</b> เอง วางในช่องที่อยู่';
+      const btn = document.createElement('button');
+      btn.textContent = '📋 คัดลอกลิงก์';
+      btn.style.cssText = 'display:block;margin:18px auto 0;font-family:inherit;font-size:17px;font-weight:700;color:#0b1f3a;background:#ffd23f;border:none;border-radius:999px;padding:14px 30px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35);';
+      btn.addEventListener('click', function () {
+        const url = location.href.split('?')[0];
+        if (navigator.clipboard) navigator.clipboard.writeText(url).catch(function () {});
+        btn.textContent = '✓ คัดลอกแล้ว — เปิดแอป Safari แล้ววาง';
+      });
+      intro.appendChild(box);
+      intro.appendChild(btn);
     }
 
     function showBrowserWarning(html) {
