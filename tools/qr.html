@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>สร้าง QR Code</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif;
+      max-width: 560px; margin: 0 auto; padding: 28px 20px; color: #16263d; line-height: 1.6;
+      text-align: center;
+    }
+    h1 { font-size: 22px; }
+    input {
+      width: 100%; font-size: 15px; padding: 12px 14px; border: 2px solid #1e5aa8;
+      border-radius: 10px; font-family: inherit; margin: 10px 0;
+    }
+    button {
+      font-family: inherit; font-size: 16px; font-weight: 700; color: #fff;
+      background: #1e5aa8; border: none; border-radius: 10px; padding: 12px 22px; cursor: pointer;
+    }
+    #qrbox { margin: 22px auto; min-height: 280px; }
+    canvas { border-radius: 12px; }
+    a.dl { display: inline-block; margin-top: 8px; color: #1e5aa8; font-weight: 700; }
+    .hint { color: #666; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>สร้าง QR Code</h1>
+  <p class="hint">ใส่ลิงก์เว็บ AR ของคุณ (เช่น <code>https://ชื่อผู้ใช้.github.io/ชื่อโปรเจกต์/</code>)
+    แล้วพิมพ์ QR ติดไว้ข้างป้ายเป้าหมาย</p>
+
+  <input id="url" type="text" placeholder="https://your-name.github.io/ar-obj/" />
+  <div><button id="gen">สร้าง QR Code</button></div>
+
+  <div id="qrbox"><canvas id="qr"></canvas></div>
+  <a id="dl" class="dl" download="qrcode.png" style="display:none">⬇ ดาวน์โหลด QR (PNG)</a>
+
+  <script>
+    const urlInput = document.getElementById('url');
+    const canvas = document.getElementById('qr');
+    const dl = document.getElementById('dl');
+
+    // เดาค่าเริ่มต้นจากตำแหน่งไฟล์นี้ (โฟลเดอร์ tools/ -> ขึ้นไปหน้าหลัก)
+    try {
+      const base = new URL('../', window.location.href).href;
+      if (base.startsWith('http')) urlInput.value = base;
+    } catch (e) {}
+
+    function generate() {
+      const text = urlInput.value.trim();
+      if (!text) return;
+      QRCode.toCanvas(canvas, text, { width: 280, margin: 2 }, (err) => {
+        if (err) { alert('สร้างไม่สำเร็จ: ' + err); return; }
+        dl.href = canvas.toDataURL('image/png');
+        dl.style.display = 'inline-block';
+      });
+    }
+
+    document.getElementById('gen').addEventListener('click', generate);
+    if (urlInput.value) generate();
+  </script>
+</body>
+</html>
