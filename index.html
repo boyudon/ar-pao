@@ -38,13 +38,12 @@
         window.__arlog('PROMISE: ' + (r && (r.name + ' ' + (r.message || r)) || r));
       });
       document.addEventListener('DOMContentLoaded', function () {
-        if (!window.isSecureContext) window.__arlog('ไม่ใช่ secure context (ต้องเปิดผ่าน HTTPS)');
         window.__arlog('UA: ' + navigator.userAgent);
       });
     })();
   </script>
 
-  <!-- A-Frame (ฉาก 360° + เซ็นเซอร์ทิศทางมือถือ) -->
+  <!-- A-Frame (ฉาก 3D: ดอกบัว + คลิป ผอ. ทับบนภาพถ่าย) -->
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
 
   <script src="./config.js"></script>
@@ -58,6 +57,12 @@
       font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif;
       background: #16121a;
     }
+    /* ภาพถ่ายทะเลบัวแดง (พื้นหลังเต็มจอ) */
+    #bg {
+      position: fixed; inset: 0; z-index: 0;
+      background: #16121a url('./assets/lotus-bg.jpg') center center / cover no-repeat;
+    }
+    /* ฉาก A-Frame โปร่งใส ซ้อนบนภาพ */
     #scene { position: fixed; inset: 0; z-index: 1; }
 
     .overlay {
@@ -67,54 +72,50 @@
       text-align: center; color: #fff; padding: 24px;
     }
     .hidden { display: none !important; }
-    #intro { background: linear-gradient(160deg, #5a2740 0%, #8a3a55 55%, #c46a7a 100%); }
+    #intro { background: linear-gradient(160deg, rgba(90,39,64,.86) 0%, rgba(138,58,85,.82) 55%, rgba(196,106,122,.8) 100%); }
     .icon-cam { font-size: 46px; margin-bottom: 14px; }
     #org-name { font-size: 16px; opacity: .9; letter-spacing: .5px; margin-bottom: 6px; }
-    #app-title { font-size: 26px; font-weight: 700; line-height: 1.35; margin: 0 0 18px; }
-    #intro-text { font-size: 15px; opacity: .92; max-width: 320px; line-height: 1.6; margin-bottom: 28px; }
+    #app-title { font-size: 26px; font-weight: 700; line-height: 1.35; margin: 0 0 18px; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
+    #intro-text { font-size: 15px; opacity: .95; max-width: 320px; line-height: 1.6; margin-bottom: 28px; }
     #start-btn {
       font-family: inherit; font-size: 18px; font-weight: 700;
       color: #5a2740; background: #ffd23f; border: none; border-radius: 999px;
       padding: 16px 34px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.35);
     }
     #start-btn:active { transform: scale(.97); }
-    #loading { background: rgba(40,20,32,.85); }
+    #loading { background: rgba(40,20,32,.7); }
     .spinner {
       width: 46px; height: 46px; border-radius: 50%;
       border: 4px solid rgba(255,255,255,.25); border-top-color: #ffd23f;
       animation: spin 1s linear infinite; margin-bottom: 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    #hint { justify-content: flex-start; pointer-events: none; background: transparent; }
-    #hint .pill {
-      margin-top: 56px; font-size: 14px;
-      background: rgba(0,0,0,.45); padding: 9px 18px; border-radius: 999px;
-    }
   </style>
 </head>
 <body>
 
-  <!-- ฉาก 360°: ภาพทะเลบัวแดงเป็นพื้นหลัง + คลิป ผอ. ยืนอยู่ในวิว -->
+  <!-- ภาพถ่ายทะเลบัวแดง -->
+  <div id="bg"></div>
+
+  <!-- ฉาก 3D: ดอกบัวหน้า-หลัง + คลิป ผอ. (ตัดฉากเขียว) -->
   <a-scene id="scene" loading-screen="enabled: false" vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
-    renderer="colorManagement: true">
+    renderer="alpha: true; colorManagement: true">
     <a-assets>
-      <img id="pano" src="./assets/pano.jpg" crossorigin="anonymous" />
       <a-asset-item id="lotusModel" src="./assets/lotus.glb"></a-asset-item>
       <video id="clip" loop playsinline webkit-playsinline crossorigin="anonymous"></video>
     </a-assets>
 
-    <a-sky id="sky" src="#pano"></a-sky>
-
     <!-- ไฟส่องโมเดลดอกบัว -->
-    <a-entity light="type: ambient; color: #ffe9d6; intensity: 0.9"></a-entity>
-    <a-entity light="type: directional; color: #fff; intensity: 0.7" position="2 4 1"></a-entity>
+    <a-entity light="type: ambient; color: #ffe9d6; intensity: 0.95"></a-entity>
+    <a-entity light="type: directional; color: #ffd9b0; intensity: 0.7" position="2 4 1"></a-entity>
 
-    <a-camera id="cam" position="0 1.6 0" wasd-controls-enabled="false"
-      look-controls="touchEnabled: false; mouseEnabled: false; magicWindowTrackingEnabled: true"></a-camera>
+    <!-- กล้องนิ่ง มองตรง เอียงลงเล็กน้อยเห็นผืนน้ำ -->
+    <a-camera id="cam" position="0 1.45 0" rotation="-5 0 0"
+      look-controls="enabled: false" wasd-controls-enabled="false"></a-camera>
 
-    <!-- ดอกบัวแดง 3D หลายดอก ลอยรอบ ๆ -->
-    <a-entity id="lotus-field" lotus-field="src: #lotusModel; count: 16; scale: 1.0"></a-entity>
+    <!-- ดอกบัวแดง 3D หลายดอก (หน้า-หลัง ผอ.) -->
+    <a-entity id="lotus-field" lotus-field="src: #lotusModel; count: 70; scale: 1.0"></a-entity>
 
     <a-entity id="director" position="0 1.2 -1.8">
       <a-entity id="director-plane"></a-entity>
@@ -125,17 +126,17 @@
   <script>
     (function () {
       var c = window.AR_CONFIG || {};
-      var pano = document.getElementById('pano');
+      var bg = document.getElementById('bg');
       var clip = document.getElementById('clip');
-      if (c.panoSrc && pano) pano.setAttribute('src', c.panoSrc);
-      if (c.videoSrc && clip) clip.setAttribute('src', c.videoSrc);
       var lf = document.getElementById('lotus-field');
+      if (c.bgSrc && bg) bg.style.backgroundImage = "url('" + c.bgSrc + "')";
+      if (c.videoSrc && clip) clip.setAttribute('src', c.videoSrc);
       if (lf && c.lotus) {
         lf.setAttribute('lotus-field',
-          'src: #lotusModel; count: ' + (c.lotus.count || 40) +
+          'src: #lotusModel; count: ' + (c.lotus.count || 60) +
           '; scale: ' + (c.lotus.scale || 1) +
-          '; inner: ' + (c.lotus.inner || 1.3) +
-          '; outer: ' + (c.lotus.outer || 9));
+          '; near: ' + (c.lotus.near || 0.8) +
+          '; far: ' + (c.lotus.far || 9));
       }
     })();
   </script>
@@ -145,7 +146,7 @@
     <div class="icon-cam">🌸</div>
     <div id="org-name">องค์การบริหารส่วนจังหวัด</div>
     <h1 id="app-title">ระบบ AR แนะนำข้อมูลโดยท่าน ผอ.</h1>
-    <p id="intro-text">แตะเพื่อเริ่ม แล้วหมุนมือถือชมท่าน ผอ. กลางทะเลบัวแดง 360°</p>
+    <p id="intro-text">แตะเพื่อเริ่มชมท่าน ผอ. กลางทะเลบัวแดง</p>
     <button id="start-btn">แตะเพื่อเริ่ม</button>
     <div style="position:absolute;bottom:8px;left:0;right:0;font-size:10px;opacity:.55;">ดอกบัว 3D โดย Sean Tarrant (CC-BY) · poly.pizza</div>
   </div>
@@ -153,10 +154,6 @@
   <div id="loading" class="overlay hidden">
     <div class="spinner"></div>
     <div id="loading-text">กำลังโหลด...</div>
-  </div>
-
-  <div id="hint" class="overlay hidden">
-    <div class="pill" id="hint-text">หมุน/ส่ายมือถือ ชมรอบทะเลบัวแดง 360°</div>
   </div>
 
   <script src="./js/markerless.js"></script>
