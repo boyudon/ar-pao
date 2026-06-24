@@ -27,6 +27,7 @@
     const director = document.getElementById('director');
     const plane    = document.getElementById('director-plane');
     const feet     = document.getElementById('feet-lotus');
+    const centerLotus = document.getElementById('center-lotus');
     const camEl    = document.getElementById('cam');
     const intro    = document.getElementById('intro');
     const loading  = document.getElementById('loading');
@@ -52,8 +53,9 @@
     const centerY = yOff + H / 2;
     director.setAttribute('position', '0 ' + centerY + ' ' + (-dist));
     if (w.faceUser !== false) director.setAttribute('billboard-yaw', '');
-    // ดอกบัวที่เท้า: ลงไปอยู่ระดับพื้น (y=0 ของโลก)
+    // ดอกบัวที่เท้า + ดอกกลางด้านหน้า: ลงไปอยู่ระดับพื้น (y=0 ของโลก)
     if (feet) feet.setAttribute('position', '0 ' + (-centerY) + ' 0');
+    if (centerLotus) centerLotus.setAttribute('position', '0 ' + (-centerY) + ' 1.0');
 
     function applyPlane() {
       const aspect = (clip.videoWidth && clip.videoHeight)
