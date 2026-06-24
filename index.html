@@ -129,6 +129,14 @@
       var clip = document.getElementById('clip');
       if (c.panoSrc && pano) pano.setAttribute('src', c.panoSrc);
       if (c.videoSrc && clip) clip.setAttribute('src', c.videoSrc);
+      var lf = document.getElementById('lotus-field');
+      if (lf && c.lotus) {
+        lf.setAttribute('lotus-field',
+          'src: #lotusModel; count: ' + (c.lotus.count || 40) +
+          '; scale: ' + (c.lotus.scale || 1) +
+          '; inner: ' + (c.lotus.inner || 1.3) +
+          '; outer: ' + (c.lotus.outer || 9));
+      }
     })();
   </script>
 
