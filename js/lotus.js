@@ -86,4 +86,27 @@
       }
     },
   });
+
+  // วงดอกบัวล้อมรอบ (annulus inner..outer) — ใช้ล้อมรอบเรือ
+  AFRAME.registerComponent('lotus-ring', {
+    schema: {
+      src:    { type: 'string', default: '#lotusModel' },
+      count:  { type: 'int',    default: 22 },
+      inner:  { type: 'number', default: 2.0 },
+      outer:  { type: 'number', default: 3.4 },
+      scale:  { type: 'number', default: 0.9 },
+      y:      { type: 'number', default: 0 },
+    },
+    init: function () {
+      const d = this.data;
+      for (let i = 0; i < d.count; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const r = d.inner + Math.random() * (d.outer - d.inner);
+        const x = Math.cos(ang) * r;
+        const z = Math.sin(ang) * r;
+        const s = d.scale * rnd(0.8, 1.25);
+        this.el.appendChild(buildLotus(d.src, x, d.y, z, s));
+      }
+    },
+  });
 })();

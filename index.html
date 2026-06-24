@@ -109,6 +109,7 @@
     <a-assets>
       <img id="bgimg" src="./assets/lotus-bg.jpg" crossorigin="anonymous" />
       <a-asset-item id="lotusModel" src="./assets/lotus.glb"></a-asset-item>
+      <a-asset-item id="boatModel" src="./assets/boat.glb"></a-asset-item>
       <video id="clip" loop playsinline webkit-playsinline crossorigin="anonymous"></video>
     </a-assets>
 
@@ -128,12 +129,11 @@
 
     <a-entity id="director" position="0 1.2 -1.8">
       <a-entity id="director-plane"></a-entity>
-      <!-- ดอกบัวดอกใหญ่ตรงเท้าท่าน ผอ. -->
-      <a-entity id="feet-lotus" position="0 -1.2 0"
-        lotus-cluster="src: #lotusModel; count: 12; radius: 0.95; scale: 0.85"></a-entity>
-      <!-- ดอกบัวเด่น 1 ดอก ตรงกลางด้านหน้า ผอ. -->
-      <a-entity id="center-lotus" position="0 -1.2 1.0"
-        lotus-cluster="src: #lotusModel; count: 1; radius: 0.05; scale: 1.4"></a-entity>
+      <!-- เรือพายไทย ตรงที่ท่าน ผอ. ยืน (position/scale ตั้งใน markerless.js) -->
+      <a-entity id="boat" gltf-model="#boatModel"></a-entity>
+      <!-- ดอกบัวแดงล้อมรอบเรือ -->
+      <a-entity id="boat-lotus"
+        lotus-ring="src: #lotusModel; inner: 2.0; outer: 3.4; count: 24; scale: 0.9"></a-entity>
     </a-entity>
   </a-scene>
 
@@ -167,7 +167,7 @@
     <h1 id="app-title">ระบบ AR แนะนำข้อมูลโดยท่าน ผอ.</h1>
     <p id="intro-text">แตะเพื่อเริ่มชมท่าน ผอ. กลางทะเลบัวแดง</p>
     <button id="start-btn">แตะเพื่อเริ่ม</button>
-    <div style="position:absolute;bottom:8px;left:0;right:0;font-size:10px;opacity:.55;">ดอกบัว 3D โดย Nicolas Comtois (CC-BY) · poly.pizza</div>
+    <div style="position:absolute;bottom:8px;left:0;right:0;font-size:10px;opacity:.55;">ดอกบัว: Nicolas Comtois · เรือ: Poly by Google (CC-BY) · poly.pizza</div>
   </div>
 
   <div id="loading" class="overlay hidden">
