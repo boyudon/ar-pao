@@ -1,7 +1,7 @@
 /* ============================================================
- *  markerless.js — ผอ. ยืนพูดหน้าฉากทะเลบัวแดง + ดอกบัว 3D
- *  แตะเริ่ม → เล่นคลิป ผอ. (ตัดฉากเขียว) บนภาพถ่ายทะเลบัวแดง
- *  กล้องนิ่ง (ไม่ใช้กล้องจริง/ไจโร)
+ *  markerless.js — ผอ. ยืนกลางทะเลบัวแดง (ฉากหลัง 360° หมุนได้)
+ *  แตะเริ่ม → เล่นคลิป ผอ. (ตัดฉากเขียว) + ดอกบัว 3D รอบตัว
+ *  หมุน/ส่ายมือถือ → มองรอบฉากทะเลบัวแดงได้ (ไจโร 3DOF)
  * ========================================================== */
 (function () {
   // คอมโพเนนต์: ให้ระนาบ ผอ. หันเข้าหากล้องเสมอ (แกนตั้ง)
@@ -26,8 +26,11 @@
     const clip     = document.getElementById('clip');
     const director = document.getElementById('director');
     const plane    = document.getElementById('director-plane');
+    const feet     = document.getElementById('feet-lotus');
+    const camEl    = document.getElementById('cam');
     const intro    = document.getElementById('intro');
     const loading  = document.getElementById('loading');
+    const hint     = document.getElementById('hint');
     const startBtn = document.getElementById('start-btn');
 
     // ---- ข้อความ ----
@@ -37,6 +40,7 @@
     setText('intro-text', ui.introMarkerless || ui.intro);
     setText('start-btn', ui.startButton);
     setText('loading-text', ui.loadingText);
+    setText('hint-text', ui.hintText);
 
     if (cfg.videoSrc) clip.setAttribute('src', cfg.videoSrc);
 
@@ -48,6 +52,8 @@
     const centerY = yOff + H / 2;
     director.setAttribute('position', '0 ' + centerY + ' ' + (-dist));
     if (w.faceUser !== false) director.setAttribute('billboard-yaw', '');
+    // ดอกบัวที่เท้า: ลงไปอยู่ระดับพื้น (y=0 ของโลก)
+    if (feet) feet.setAttribute('position', '0 ' + (-centerY) + ' 0');
 
     function applyPlane() {
       const aspect = (clip.videoWidth && clip.videoHeight)
@@ -70,6 +76,19 @@
     applyPlane();
     clip.addEventListener('loadedmetadata', applyPlane);
 
+    // วาง ผอ. (+ ดอกบัวที่เท้า) ไว้ตรงหน้าทิศที่มือถือชี้อยู่ตอนเริ่ม
+    function placeInFront() {
+      if (!camEl || !camEl.object3D) return;
+      const q = camEl.object3D.quaternion;
+      const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
+      fwd.y = 0;
+      if (fwd.lengthSq() < 1e-6) { fwd.set(0, 0, -1); }
+      fwd.normalize();
+      director.setAttribute('position',
+        (fwd.x * dist).toFixed(2) + ' ' + centerY + ' ' + (fwd.z * dist).toFixed(2));
+      log('วาง ผอ. ตรงหน้าแล้ว');
+    }
+
     // ---- เตือนเบราว์เซอร์ที่ใช้ไม่ได้ ----
     if (isIosNonSafari()) {
       showSafariGate();
@@ -79,23 +98,43 @@
 
     // ---- ปุ่มเริ่ม ----
     let started = false;
-    startBtn.addEventListener('click', function () {
+    startBtn.addEventListener('click', async function () {
       if (started) return;
       started = true;
-      log('แตะเริ่ม → เล่นคลิป');
+      log('แตะเริ่ม');
 
       // เล่นคลิปพร้อมเสียงในจังหวะแตะ (สำคัญบน iOS)
       clip.muted = !cfg.sound;
       var cp = clip.play();
       if (cp && cp.catch) cp.catch(function () { clip.muted = true; clip.play().catch(function () {}); });
 
-      applyPlane();
+      // ขอสิทธิ์เซ็นเซอร์ทิศทาง (เริ่มในจังหวะแตะเดียวกัน)
+      let orientPromise = null;
+      try {
+        if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+          orientPromise = DeviceOrientationEvent.requestPermission();
+        }
+      } catch (e) { log('ขอสิทธิ์เซ็นเซอร์ไม่ได้: ' + e); }
+
       hide(intro);
       show(loading);
 
+      if (orientPromise) {
+        try { const p = await orientPromise; log('สิทธิ์เซ็นเซอร์: ' + p); }
+        catch (e) { log('สิทธิ์เซ็นเซอร์ error: ' + e); }
+      }
+
+      applyPlane();
+      setTimeout(placeInFront, 600);
+
       // ซ่อนตัวโหลดเมื่อคลิปเริ่มเล่น (หรือหลังเวลาสั้น ๆ)
       let done = false;
-      function ready() { if (done) return; done = true; hide(loading); log('✓ เล่นแล้ว'); }
+      function ready() {
+        if (done) return; done = true;
+        hide(loading); show(hint);
+        setTimeout(function () { hide(hint); }, 6000);
+        log('✓ เล่นแล้ว');
+      }
       clip.addEventListener('playing', ready, { once: true });
       setTimeout(ready, 1800);
     });

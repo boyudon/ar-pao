@@ -90,6 +90,11 @@
       animation: spin 1s linear infinite; margin-bottom: 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    #hint { justify-content: flex-start; pointer-events: none; background: transparent; }
+    #hint .pill {
+      margin-top: 56px; font-size: 14px;
+      background: rgba(0,0,0,.45); padding: 9px 18px; border-radius: 999px;
+    }
   </style>
 </head>
 <body>
@@ -102,23 +107,30 @@
     device-orientation-permission-ui="enabled: false"
     renderer="alpha: true; colorManagement: true">
     <a-assets>
+      <img id="bgimg" src="./assets/lotus-bg.jpg" crossorigin="anonymous" />
       <a-asset-item id="lotusModel" src="./assets/lotus.glb"></a-asset-item>
       <video id="clip" loop playsinline webkit-playsinline crossorigin="anonymous"></video>
     </a-assets>
+
+    <!-- ฉากหลัง 360°: ภาพถ่ายทะเลบัวแดง (หมุนมือถือมองรอบได้) -->
+    <a-sky id="sky" src="#bgimg"></a-sky>
 
     <!-- ไฟส่องโมเดลดอกบัว -->
     <a-entity light="type: ambient; color: #ffe9d6; intensity: 0.95"></a-entity>
     <a-entity light="type: directional; color: #ffd9b0; intensity: 0.7" position="2 4 1"></a-entity>
 
-    <!-- กล้องนิ่ง มองตรง เอียงลงเล็กน้อยเห็นผืนน้ำ -->
-    <a-camera id="cam" position="0 1.45 0" rotation="-5 0 0"
-      look-controls="enabled: false" wasd-controls-enabled="false"></a-camera>
+    <!-- กล้องหมุนตามเซ็นเซอร์มือถือ (มองรอบ 360°) -->
+    <a-camera id="cam" position="0 1.6 0" wasd-controls-enabled="false"
+      look-controls="touchEnabled: false; mouseEnabled: false; magicWindowTrackingEnabled: true"></a-camera>
 
-    <!-- ดอกบัวแดง 3D หลายดอก (หน้า-หลัง ผอ.) -->
+    <!-- ทุ่งดอกบัวรอบตัว -->
     <a-entity id="lotus-field" lotus-field="src: #lotusModel; count: 70; scale: 1.0"></a-entity>
 
     <a-entity id="director" position="0 1.2 -1.8">
       <a-entity id="director-plane"></a-entity>
+      <!-- ดอกบัวดอกใหญ่ตรงเท้าท่าน ผอ. -->
+      <a-entity id="feet-lotus" position="0 -1.2 0"
+        lotus-cluster="src: #lotusModel; count: 8; radius: 0.8; scale: 2.0"></a-entity>
     </a-entity>
   </a-scene>
 
@@ -127,9 +139,13 @@
     (function () {
       var c = window.AR_CONFIG || {};
       var bg = document.getElementById('bg');
+      var bgimg = document.getElementById('bgimg');
       var clip = document.getElementById('clip');
       var lf = document.getElementById('lotus-field');
-      if (c.bgSrc && bg) bg.style.backgroundImage = "url('" + c.bgSrc + "')";
+      if (c.bgSrc) {
+        if (bg) bg.style.backgroundImage = "url('" + c.bgSrc + "')";
+        if (bgimg) bgimg.setAttribute('src', c.bgSrc);
+      }
       if (c.videoSrc && clip) clip.setAttribute('src', c.videoSrc);
       if (lf && c.lotus) {
         lf.setAttribute('lotus-field',
@@ -154,6 +170,10 @@
   <div id="loading" class="overlay hidden">
     <div class="spinner"></div>
     <div id="loading-text">กำลังโหลด...</div>
+  </div>
+
+  <div id="hint" class="overlay hidden">
+    <div class="pill" id="hint-text">หมุน/ส่ายมือถือ ชมรอบ</div>
   </div>
 
   <script src="./js/markerless.js"></script>
