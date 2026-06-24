@@ -49,6 +49,7 @@
 
   <script src="./config.js"></script>
   <script src="./js/chromakey.js"></script>
+  <script src="./js/lotus.js"></script>
 
   <style>
     * { box-sizing: border-box; }
@@ -99,13 +100,21 @@
     renderer="colorManagement: true">
     <a-assets>
       <img id="pano" src="./assets/pano.jpg" crossorigin="anonymous" />
+      <a-asset-item id="lotusModel" src="./assets/lotus.glb"></a-asset-item>
       <video id="clip" loop playsinline webkit-playsinline crossorigin="anonymous"></video>
     </a-assets>
 
     <a-sky id="sky" src="#pano"></a-sky>
 
+    <!-- ไฟส่องโมเดลดอกบัว -->
+    <a-entity light="type: ambient; color: #ffe9d6; intensity: 0.9"></a-entity>
+    <a-entity light="type: directional; color: #fff; intensity: 0.7" position="2 4 1"></a-entity>
+
     <a-camera id="cam" position="0 1.6 0" wasd-controls-enabled="false"
       look-controls="touchEnabled: false; mouseEnabled: false; magicWindowTrackingEnabled: true"></a-camera>
+
+    <!-- ดอกบัวแดง 3D หลายดอก ลอยรอบ ๆ -->
+    <a-entity id="lotus-field" lotus-field="src: #lotusModel; count: 16; scale: 1.0"></a-entity>
 
     <a-entity id="director" position="0 1.2 -1.8">
       <a-entity id="director-plane"></a-entity>
@@ -130,6 +139,7 @@
     <h1 id="app-title">ระบบ AR แนะนำข้อมูลโดยท่าน ผอ.</h1>
     <p id="intro-text">แตะเพื่อเริ่ม แล้วหมุนมือถือชมท่าน ผอ. กลางทะเลบัวแดง 360°</p>
     <button id="start-btn">แตะเพื่อเริ่ม</button>
+    <div style="position:absolute;bottom:8px;left:0;right:0;font-size:10px;opacity:.55;">ดอกบัว 3D โดย Sean Tarrant (CC-BY) · poly.pizza</div>
   </div>
 
   <div id="loading" class="overlay hidden">
