@@ -38,15 +38,13 @@
         window.__arlog('PROMISE: ' + (r && (r.name + ' ' + (r.message || r)) || r));
       });
       document.addEventListener('DOMContentLoaded', function () {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia)
-          window.__arlog('เบราว์เซอร์นี้ไม่รองรับ getUserMedia (เปิดกล้องไม่ได้)');
         if (!window.isSecureContext) window.__arlog('ไม่ใช่ secure context (ต้องเปิดผ่าน HTTPS)');
         window.__arlog('UA: ' + navigator.userAgent);
       });
     })();
   </script>
 
-  <!-- A-Frame (ใช้เซ็นเซอร์ทิศทางมือถือ ยึดคลิปกับโลกจริง) -->
+  <!-- A-Frame (ฉาก 360° + เซ็นเซอร์ทิศทางมือถือ) -->
   <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
 
   <script src="./config.js"></script>
@@ -57,15 +55,8 @@
     html, body {
       margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
       font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif;
-      background: #000;
+      background: #16121a;
     }
-
-    /* ภาพกล้องสด (พื้นหลัง) */
-    #camera {
-      position: fixed; inset: 0; width: 100%; height: 100%;
-      object-fit: cover; z-index: 0; background: #000;
-    }
-    /* ฉาก A-Frame โปร่งใส ซ้อนบนภาพกล้อง */
     #scene { position: fixed; inset: 0; z-index: 1; }
 
     .overlay {
@@ -75,18 +66,18 @@
       text-align: center; color: #fff; padding: 24px;
     }
     .hidden { display: none !important; }
-    #intro { background: linear-gradient(160deg, #0b1f3a 0%, #123a6b 60%, #1e5aa8 100%); }
+    #intro { background: linear-gradient(160deg, #5a2740 0%, #8a3a55 55%, #c46a7a 100%); }
     .icon-cam { font-size: 46px; margin-bottom: 14px; }
-    #org-name { font-size: 16px; opacity: .85; letter-spacing: .5px; margin-bottom: 6px; }
+    #org-name { font-size: 16px; opacity: .9; letter-spacing: .5px; margin-bottom: 6px; }
     #app-title { font-size: 26px; font-weight: 700; line-height: 1.35; margin: 0 0 18px; }
-    #intro-text { font-size: 15px; opacity: .9; max-width: 320px; line-height: 1.6; margin-bottom: 28px; }
+    #intro-text { font-size: 15px; opacity: .92; max-width: 320px; line-height: 1.6; margin-bottom: 28px; }
     #start-btn {
       font-family: inherit; font-size: 18px; font-weight: 700;
-      color: #0b1f3a; background: #ffd23f; border: none; border-radius: 999px;
+      color: #5a2740; background: #ffd23f; border: none; border-radius: 999px;
       padding: 16px 34px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.35);
     }
     #start-btn:active { transform: scale(.97); }
-    #loading { background: rgba(11,31,58,.85); }
+    #loading { background: rgba(40,20,32,.85); }
     .spinner {
       width: 46px; height: 46px; border-radius: 50%;
       border: 4px solid rgba(255,255,255,.25); border-top-color: #ffd23f;
@@ -102,41 +93,52 @@
 </head>
 <body>
 
-  <!-- พื้นหลัง: กล้องสด -->
-  <video id="camera" autoplay muted playsinline webkit-playsinline></video>
-
-  <!-- ฉาก AR: คลิป ผอ. เกาะตำแหน่งในโลกจริง, กล้องหมุนตามเซ็นเซอร์มือถือ -->
-  <a-scene id="scene" embedded loading-screen="enabled: false" vr-mode-ui="enabled: false"
+  <!-- ฉาก 360°: ภาพทะเลบัวแดงเป็นพื้นหลัง + คลิป ผอ. ยืนอยู่ในวิว -->
+  <a-scene id="scene" loading-screen="enabled: false" vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
-    renderer="alpha: true; colorManagement: true">
+    renderer="colorManagement: true">
     <a-assets>
+      <img id="pano" src="./assets/pano.jpg" crossorigin="anonymous" />
       <video id="clip" loop playsinline webkit-playsinline crossorigin="anonymous"></video>
     </a-assets>
+
+    <a-sky id="sky" src="#pano"></a-sky>
 
     <a-camera id="cam" position="0 1.6 0" wasd-controls-enabled="false"
       look-controls="touchEnabled: false; mouseEnabled: false; magicWindowTrackingEnabled: true"></a-camera>
 
-    <a-entity id="director" position="0 0.95 -3">
+    <a-entity id="director" position="0 1.2 -1.8">
       <a-entity id="director-plane"></a-entity>
     </a-entity>
   </a-scene>
 
+  <!-- ใช้ค่าจาก config.js ก่อน A-Frame เริ่มทำงาน -->
+  <script>
+    (function () {
+      var c = window.AR_CONFIG || {};
+      var pano = document.getElementById('pano');
+      var clip = document.getElementById('clip');
+      if (c.panoSrc && pano) pano.setAttribute('src', c.panoSrc);
+      if (c.videoSrc && clip) clip.setAttribute('src', c.videoSrc);
+    })();
+  </script>
+
   <!-- หน้าเริ่ม -->
   <div id="intro" class="overlay">
-    <div class="icon-cam">📷</div>
+    <div class="icon-cam">🌸</div>
     <div id="org-name">องค์การบริหารส่วนจังหวัด</div>
     <h1 id="app-title">ระบบ AR แนะนำข้อมูลโดยท่าน ผอ.</h1>
-    <p id="intro-text">แตะเพื่อเปิดกล้อง แล้วหมุนมือถือดูรอบ ๆ จะเห็นท่าน ผอ. ยืนอยู่</p>
-    <button id="start-btn">เริ่ม / อนุญาตกล้อง</button>
+    <p id="intro-text">แตะเพื่อเริ่ม แล้วหมุนมือถือชมท่าน ผอ. กลางทะเลบัวแดง 360°</p>
+    <button id="start-btn">แตะเพื่อเริ่ม</button>
   </div>
 
   <div id="loading" class="overlay hidden">
     <div class="spinner"></div>
-    <div id="loading-text">กำลังเปิดกล้อง...</div>
+    <div id="loading-text">กำลังโหลด...</div>
   </div>
 
   <div id="hint" class="overlay hidden">
-    <div class="pill" id="hint-text">หมุน/ส่ายมือถือไปรอบ ๆ เพื่อมองท่าน ผอ.</div>
+    <div class="pill" id="hint-text">หมุน/ส่ายมือถือ ชมรอบทะเลบัวแดง 360°</div>
   </div>
 
   <script src="./js/markerless.js"></script>
