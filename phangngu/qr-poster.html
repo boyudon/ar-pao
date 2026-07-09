@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>โปสเตอร์ QR — AR ท่าน ผอ. โรงเรียนพังงูวิทยา</title>
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #e9eef5; }
+  body { font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif; }
+
+  .sheet {
+    width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16mm 14mm; text-align: center; color: #16263d;
+  }
+  @media print {
+    html, body { background: #fff; }
+    .sheet { box-shadow: none; margin: 0; }
+    .noprint { display: none; }
+  }
+  @media screen {
+    .sheet { box-shadow: 0 6px 30px rgba(0,0,0,.18); margin: 24px auto; }
+  }
+
+  .org { font-size: 20px; font-weight: 700; color: #1e5aa8; letter-spacing: .5px; }
+  h1 { font-size: 34px; line-height: 1.35; margin-top: 6mm; }
+  h1 .accent { color: #b8264c; }
+  .sub { font-size: 18px; color: #4a5a70; margin-top: 3mm; }
+
+  .qrwrap {
+    margin: 10mm auto 6mm; padding: 8mm; background: #fff;
+    border: 3mm solid #6d28d9; border-radius: 10mm;
+  }
+  .qrwrap img { width: 100mm; height: 100mm; display: block; }
+  .url { font-size: 16px; font-weight: 700; color: #1e5aa8; letter-spacing: .3px; }
+
+  .steps {
+    margin-top: 9mm; width: 100%; text-align: left;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 5mm 8mm;
+  }
+  .step { display: flex; gap: 4mm; align-items: flex-start; }
+  .num {
+    flex: 0 0 auto; width: 9mm; height: 9mm; border-radius: 50%;
+    background: #b8264c; color: #fff; font-weight: 800; font-size: 17px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step p { font-size: 15.5px; line-height: 1.5; }
+
+  .note {
+    margin-top: 8mm; background: #fdf3e3; border: 1px solid #e8c98a; border-radius: 4mm;
+    padding: 4mm 6mm; font-size: 14.5px; color: #7a5410; line-height: 1.55; width: 100%;
+  }
+  .footer { margin-top: auto; padding-top: 6mm; font-size: 13px; color: #8a97a8; }
+
+  .printbtn {
+    position: fixed; right: 18px; bottom: 18px; font-family: inherit;
+    font-size: 16px; font-weight: 700; color: #fff; background: #1e5aa8;
+    border: none; border-radius: 10px; padding: 12px 22px; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="org">โรงเรียนพังงูวิทยา องค์การบริหารส่วนจังหวัดอุดรธานี ๕</div>
+  <h1>ส่อง QR Code<br /><span class="accent">พบท่าน ผอ. แนะนำข้อมูล</span><br />แบบ 360° (AR)</h1>
+  <div class="sub">ชมคลิปท่านผู้อำนวยการยืนบรรยายข้อมูลแบบ 360 องศา ผ่านมือถือของคุณ</div>
+
+  <div class="qrwrap"><img src="data:image/png;base64,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" alt="QR Code เปิดเว็บ AR" /></div>
+  <div class="url">boyudon.github.io/ar-pao/phangngu</div>
+
+  <div class="steps">
+    <div class="step"><div class="num">1</div><p><b>เปิดกล้องมือถือ</b> ส่องที่ QR Code ด้านบน แล้วแตะลิงก์ที่ปรากฏ</p></div>
+    <div class="step"><div class="num">2</div><p><b>แตะปุ่ม "แตะเพื่อเริ่ม"</b> และอนุญาตการเข้าถึงเมื่อระบบถาม</p></div>
+    <div class="step"><div class="num">3</div><p><b>หมุนมือถือไปรอบ ๆ</b> เพื่อชมฉากรอบตัว 360 องศา</p></div>
+    <div class="step"><div class="num">4</div><p><b>รับชมท่าน ผอ.</b> ยืนบรรยายข้อมูล พร้อมเสียง</p></div>
+  </div>
+
+  <div class="note">📱 <b>ผู้ใช้ iPhone:</b> กรุณาเปิดลิงก์ด้วย <b>Safari</b> เท่านั้น (การส่อง QR ด้วยแอปกล้องของ iPhone จะเปิด Safari ให้อัตโนมัติ) — หากเปิดด้วย Chrome หรือแอปอื่นบน iPhone จะไม่สามารถใช้งาน AR ได้</div>
+
+  <div class="footer">ระบบ AR แนะนำข้อมูลโดยท่าน ผอ. • https://boyudon.github.io/ar-pao/phangngu/</div>
+</div>
+<button class="printbtn noprint" onclick="window.print()">🖨 พิมพ์โปสเตอร์</button>
+</body>
+</html>
