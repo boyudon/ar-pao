@@ -60,7 +60,7 @@
     /* ภาพพื้นหลัง 360° (เต็มจอ ระหว่างโหลด) */
     #bg {
       position: fixed; inset: 0; z-index: 0;
-      background: #16121a url('../assets/lotus-bg.jpg') center center / cover no-repeat;
+      background: #16121a url('./assets/bg.jpg') center center / cover no-repeat;
     }
     /* ฉาก A-Frame โปร่งใส ซ้อนบนภาพ */
     #scene { position: fixed; inset: 0; z-index: 1; }
@@ -108,7 +108,7 @@
     device-orientation-permission-ui="enabled: false"
     renderer="alpha: true; colorManagement: true">
     <a-assets>
-      <img id="bgimg" src="../assets/lotus-bg.jpg" crossorigin="anonymous" />
+      <img id="bgimg" src="./assets/bg.jpg" crossorigin="anonymous" />
       <video id="clip" loop playsinline webkit-playsinline crossorigin="anonymous"></video>
     </a-assets>
 
