@@ -125,18 +125,28 @@
              เพื่อให้เลื่อนตาม offsetX แม้ตอนหันหน้าเข้ากล้อง (กึ่งกลางแท่นตรงเท้าเสมอ)
              markerless.js วางฐานที่ระดับพื้น + config.world.yOffset ให้เท้าแตะผิวแท่นพอดี -->
         <a-entity id="pedestal">
+          <!-- โทนพรมแดง-ทอง ให้เด่นจากพื้นปูนสีเทาน้ำตาลของสนาม (ความสูงรวม 0.34 เท่าเดิม) -->
           <a-circle position="0 0.005 0" rotation="-90 0 0" radius="0.74"
-            material="color: #000; opacity: 0.13; transparent: true; shader: flat"></a-circle>
+            material="color: #000; opacity: 0.16; transparent: true; shader: flat"></a-circle>
+          <!-- ฐานล่าง: ทองสำริดเข้ม -->
           <a-cylinder radius="0.64" height="0.08" position="0 0.04 0"
-            color="#2e3d4c" material="metalness: 0.2; roughness: 0.6"></a-cylinder>
-          <a-cylinder radius="0.54" height="0.02" position="0 0.09 0"
-            color="#c9a227" material="metalness: 0.8; roughness: 0.25"></a-cylinder>
-          <a-cylinder radius="0.52" height="0.24" position="0 0.22 0"
-            color="#ede8dc" material="metalness: 0.05; roughness: 0.85"></a-cylinder>
+            color="#8c6d1f" material="metalness: 0.75; roughness: 0.35"></a-cylinder>
+          <!-- แหวนทองสว่าง คั่นฐานกับตัวแท่น -->
+          <a-cylinder radius="0.56" height="0.03" position="0 0.095 0"
+            color="#e6c14c" material="metalness: 0.9; roughness: 0.2"></a-cylinder>
+          <!-- ตัวแท่น: แดงกำมะหยี่เข้ม -->
+          <a-cylinder radius="0.52" height="0.23" position="0 0.225 0"
+            color="#8e1b2b" material="metalness: 0.05; roughness: 0.9"></a-cylinder>
+          <!-- ขอบทองรอบปากแท่น -->
+          <a-torus position="0 0.337 0" rotation="-90 0 0" radius="0.52" radius-tubular="0.012"
+            color="#e6c14c" material="metalness: 0.9; roughness: 0.2"></a-torus>
+          <!-- พรมแดงสดผิวบน -->
+          <a-circle position="0 0.3401 0" rotation="-90 0 0" radius="0.5"
+            material="color: #b3202e; shader: flat"></a-circle>
           <!-- เงาสัมผัสรี ๆ บนผิวแท่น ใต้สองเท้าของท่าน (กึ่งกลาง stance = กึ่งกลางแท่นพอดี
                หลังใช้ pedestal.offsetX) ช่วยให้เท้าที่อยู่สูงกว่าขอบล่างเฟรมดูเหยียบผิวแท่นจริง -->
           <a-circle position="0 0.3405 0.01" rotation="-90 0 0" radius="0.17" scale="1.15 0.7 1"
-            material="color: #000; opacity: 0.18; transparent: true; shader: flat"></a-circle>
+            material="color: #000; opacity: 0.22; transparent: true; shader: flat"></a-circle>
         </a-entity>
       </a-entity>
     </a-entity>
