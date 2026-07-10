@@ -120,15 +120,17 @@
       look-controls="touchEnabled: false; mouseEnabled: false; magicWindowTrackingEnabled: true"></a-camera>
 
     <a-entity id="director" position="0 1.2 -1.8">
-      <a-entity id="director-plane"></a-entity>
-      <!-- แท่นยืนของท่าน ผอ. (พรมแดง-ขอบทอง ให้เข้ากับเวทีในห้อง; ตำแหน่ง y ตั้งใน markerless.js) -->
-      <a-entity id="pedestal">
-        <a-circle position="0 0.005 0" rotation="-90 0 0" radius="0.68"
-          material="color: #000; opacity: 0.13; transparent: true; shader: flat"></a-circle>
-        <a-cylinder position="0 0.05 0" radius="0.62" height="0.1"
-          material="color: #c9a24b; metalness: 0.5; roughness: 0.35"></a-cylinder>
-        <a-cylinder position="0 0.16 0" radius="0.5" height="0.12"
-          material="color: #a8232f; roughness: 0.95"></a-cylinder>
+      <a-entity id="director-plane">
+        <!-- แท่นยืนของท่าน ผอ. (พรมแดง-ขอบทอง ให้เข้ากับเวทีในห้อง; ตำแหน่ง x/y ตั้งใน markerless.js)
+             อยู่ใต้ระนาบวิดีโอ (child) เพื่อให้เลื่อนตามการหันหน้าเข้ากล้อง — กึ่งกลางแท่นตรงเท้าเสมอ -->
+        <a-entity id="pedestal">
+          <a-circle position="0 0.005 0" rotation="-90 0 0" radius="0.68"
+            material="color: #000; opacity: 0.13; transparent: true; shader: flat"></a-circle>
+          <a-cylinder position="0 0.05 0" radius="0.62" height="0.1"
+            material="color: #c9a24b; metalness: 0.5; roughness: 0.35"></a-cylinder>
+          <a-cylinder position="0 0.16 0" radius="0.5" height="0.12"
+            material="color: #a8232f; roughness: 0.95"></a-cylinder>
+        </a-entity>
       </a-entity>
     </a-entity>
   </a-scene>

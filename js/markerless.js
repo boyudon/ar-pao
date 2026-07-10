@@ -64,9 +64,14 @@
     }
     if (boatLotus) boatLotus.setAttribute('position', '0 ' + (-centerY) + ' 0');
     // แท่นยืนใต้เท้า ผอ. (เฉพาะหน้าที่มี #pedestal): ฐานแท่นอยู่ระดับพื้นโลก
-    // ใช้คู่กับ world.yOffset = ความสูงแท่น เพื่อให้ท่านยืน "บน" แท่นพอดี
+    // ใช้คู่กับ world.yOffset ให้เท้า (จุดล่างสุดของตัวในคลิป) แตะผิวแท่นพอดี
+    // cfg.pedestal.offsetX = เลื่อนแท่นซ้าย/ขวา (เมตร) ให้กึ่งกลางแท่นตรงเท้า
+    // (#pedestal ต้องเป็น child ของ #director-plane เพื่อให้ offset หมุนตาม billboard)
     const pedestal = document.getElementById('pedestal');
-    if (pedestal) pedestal.setAttribute('position', '0 ' + (-centerY) + ' 0');
+    if (pedestal) {
+      const pedX = (cfg.pedestal && cfg.pedestal.offsetX != null) ? cfg.pedestal.offsetX : 0;
+      pedestal.setAttribute('position', pedX + ' ' + (-centerY) + ' 0');
+    }
 
     function applyPlane() {
       const aspect = (clip.videoWidth && clip.videoHeight)
