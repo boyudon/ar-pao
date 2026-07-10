@@ -125,14 +125,18 @@
              เพื่อให้เลื่อนตาม offsetX แม้ตอนหันหน้าเข้ากล้อง (กึ่งกลางแท่นตรงเท้าเสมอ)
              markerless.js วางฐานที่ระดับพื้น + config.world.yOffset ให้เท้าแตะผิวแท่นพอดี -->
         <a-entity id="pedestal">
-          <a-circle position="0 0.005 0" rotation="-90 0 0" radius="0.66"
+          <a-circle position="0 0.005 0" rotation="-90 0 0" radius="0.74"
             material="color: #000; opacity: 0.13; transparent: true; shader: flat"></a-circle>
-          <a-cylinder radius="0.58" height="0.08" position="0 0.04 0"
+          <a-cylinder radius="0.64" height="0.08" position="0 0.04 0"
             color="#2e3d4c" material="metalness: 0.2; roughness: 0.6"></a-cylinder>
-          <a-cylinder radius="0.47" height="0.02" position="0 0.09 0"
+          <a-cylinder radius="0.54" height="0.02" position="0 0.09 0"
             color="#c9a227" material="metalness: 0.8; roughness: 0.25"></a-cylinder>
-          <a-cylinder radius="0.45" height="0.24" position="0 0.22 0"
+          <a-cylinder radius="0.52" height="0.24" position="0 0.22 0"
             color="#ede8dc" material="metalness: 0.05; roughness: 0.85"></a-cylinder>
+          <!-- เงาสัมผัสรี ๆ บนผิวแท่น ใต้สองเท้าของท่าน (กึ่งกลาง stance = กึ่งกลางแท่นพอดี
+               หลังใช้ pedestal.offsetX) ช่วยให้เท้าหลังที่อยู่สูงกว่าขอบล่างเฟรมดูเหยียบผิวแท่นจริง -->
+          <a-circle position="0 0.3405 0.01" rotation="-90 0 0" radius="0.17" scale="1.15 0.7 1"
+            material="color: #000; opacity: 0.18; transparent: true; shader: flat"></a-circle>
         </a-entity>
       </a-entity>
     </a-entity>
