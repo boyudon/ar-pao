@@ -63,6 +63,10 @@
       boat.setAttribute('rotation', '0 ' + (boatCfg.rotationY != null ? boatCfg.rotationY : 0) + ' 0');
     }
     if (boatLotus) boatLotus.setAttribute('position', '0 ' + (-centerY) + ' 0');
+    // แท่นยืนใต้เท้า ผอ. (เฉพาะหน้าที่มี #pedestal): ฐานแท่นอยู่ระดับพื้นโลก
+    // ใช้คู่กับ world.yOffset = ความสูงแท่น เพื่อให้ท่านยืน "บน" แท่นพอดี
+    const pedestal = document.getElementById('pedestal');
+    if (pedestal) pedestal.setAttribute('position', '0 ' + (-centerY) + ' 0');
 
     function applyPlane() {
       const aspect = (clip.videoWidth && clip.videoHeight)
