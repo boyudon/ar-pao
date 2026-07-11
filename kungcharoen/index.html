@@ -112,8 +112,10 @@
       <video id="clip" loop playsinline webkit-playsinline crossorigin="anonymous"></video>
     </a-assets>
 
-    <!-- ฉากหลัง 360°: ภาพพาโนรามาห้องบูธ (หมุนมือถือมองรอบได้) -->
-    <a-sky id="sky" src="#bgimg"></a-sky>
+    <!-- ฉากหลัง 360°: ภาพพาโนรามาห้องบูธ (หมุนมือถือมองรอบได้)
+         rotation Y=100° หมุนให้ "แถวนักเรียน" (เสื้อขาวซ้าย/เสื้อส้มขวา + ป้าย LIBRARY) มาอยู่หลังท่าน ผอ.
+         แทนช่องทางเดินว่าง — ท่านยืนอยู่กึ่งกลางระหว่างนักเรียน -->
+    <a-sky id="sky" src="#bgimg" rotation="0 100 0"></a-sky>
 
     <!-- กล้องหมุนตามเซ็นเซอร์มือถือ (มองรอบ 360°) -->
     <a-camera id="cam" position="0 1.6 0" wasd-controls-enabled="false"
