@@ -112,8 +112,10 @@
       <video id="clip" loop playsinline webkit-playsinline crossorigin="anonymous"></video>
     </a-assets>
 
-    <!-- ฉากหลัง 360°: ภาพพาโนรามา (หมุนมือถือมองรอบได้) -->
-    <a-sky id="sky" src="#bgimg"></a-sky>
+    <!-- ฉากหลัง 360°: ภาพพาโนรามา (หมุนมือถือมองรอบได้)
+         rotation Y=150° หมุนให้ "เวทีมวย" (สนามมวยโรงเรียน + เก้าอี้ผู้ชมโค้งล้อม) มาอยู่หลังท่าน ผอ.
+         แทนลานจอดรถ/ช่องว่างระหว่างอาคาร — ท่านยืนหน้าเวทีมวย (วัดมุมจาก equirect + ทดสอบ preview) -->
+    <a-sky id="sky" src="#bgimg" rotation="0 150 0"></a-sky>
 
     <!-- กล้องหมุนตามเซ็นเซอร์มือถือ (มองรอบ 360°) -->
     <a-camera id="cam" position="0 1.6 0" wasd-controls-enabled="false"
