@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QR ล่าตราโรงเรียน — เกมพายเรือเก็บบัวแดง</title>
+<script src="./js/qrcode-gen.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif;
+    margin: 0; padding: 24px 18px 60px; color: #3d1626; background: #faf3f0;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 24px; text-align: center; margin: 0 0 4px; }
+  .sub { text-align: center; font-size: 14px; opacity: .75; margin: 0 0 18px; }
+
+  /* แถบควบคุม (ซ่อนตอนพิมพ์) */
+  #controls {
+    background: #fff; border: 2px solid #e8a0bc; border-radius: 16px;
+    padding: 14px 16px; margin-bottom: 22px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
+  }
+  #controls label { font-size: 13.5px; font-weight: 700; }
+  #base {
+    flex: 1; min-width: 240px; font: inherit; font-size: 14px;
+    border: 2px solid #c2497a; border-radius: 10px; padding: 9px 12px;
+  }
+  #controls button {
+    font: inherit; font-size: 15px; font-weight: 800; color: #fff;
+    background: #c2497a; border: none; border-radius: 10px; padding: 10px 18px; cursor: pointer;
+  }
+  #controls button.print { background: #5a2740; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+  .card {
+    background: #fff; border: 2.5px solid #c2497a; border-radius: 18px;
+    padding: 16px 14px 14px; text-align: center;
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .card.bonus { border-color: #c2861a; background: linear-gradient(160deg, #fffbe8, #fff3d0); }
+  .card .ic { font-size: 34px; line-height: 1; }
+  .card .ic img { width: 64px; height: 64px; object-fit: contain; }
+  .card h2 { font-size: 16.5px; margin: 6px 0 1px; }
+  .card .full { font-size: 11.5px; opacity: .75; margin: 0 0 10px; min-height: 2.4em; line-height: 1.35; }
+  .card canvas { width: 180px !important; height: 180px !important; border-radius: 10px; }
+  .card .code { font-size: 12px; font-weight: 800; letter-spacing: 1px; color: #c2497a; margin-top: 6px; }
+  .card.bonus .code { color: #c2861a; }
+  .card .hint { font-size: 10.5px; opacity: .7; margin-top: 2px; }
+  .card.bonus .tag {
+    display: inline-block; font-size: 10.5px; font-weight: 800; color: #fff;
+    background: #c2861a; border-radius: 999px; padding: 2px 10px; margin-bottom: 6px;
+  }
+
+  .howto {
+    background: #fff; border-radius: 16px; padding: 14px 18px; margin: 22px 0 0;
+    font-size: 13.5px; line-height: 1.9;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    #controls, .howto { display: none; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 10mm; }
+    .card { border-width: 1.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔑 QR ล่าตราโรงเรียน อบจ.อุดรธานี</h1>
+  <p class="sub">พิมพ์แล้วตัดแปะที่โปสเตอร์ AR ของแต่ละโรงเรียน — นักเรียนสแกนเพื่อสะสมตราในเกม "พายเรือเก็บบัวแดง"<br />สะสมครบ 10 โรงเรียน ปลดล็อกเรือทองคำ + มงกุฎเป็ดน้อย 🏆</p>
+
+  <div id="controls">
+    <label>ลิงก์เกม:</label>
+    <input id="base" value="https://boyudon.github.io/ar-pao/" />
+    <button id="regen">↻ สร้าง QR ใหม่</button>
+    <button class="print" onclick="window.print()">🖨 พิมพ์</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="howto">
+    <b>วิธีใช้:</b> ตัดการ์ดของแต่ละโรงเรียนไปแปะที่โปสเตอร์ AR หรือบอร์ดประชาสัมพันธ์ของโรงเรียนนั้น ๆ (การ์ดสีทองคือ "โค้ดลับพิเศษ" เอาไปซ่อนที่ไหนก็ได้ เช่น ห้องสมุด มุมลับในงานกิจกรรม) • นักเรียนใช้กล้องมือถือสแกน แล้วเปิดลิงก์ เกมจะมอบตราให้อัตโนมัติ • โค้ดแต่ละอันรับซ้ำไม่ได้ • ถ้าสแกนไม่ได้ ให้เข้าเกม → ปุ่ม "🔑 โค้ดลับ QR" แล้วพิมพ์โค้ดใต้ QR แทน
+  </div>
+</div>
+
+<script>
+// รายชื่อต้องตรงกับ BADGES/BONUS ใน game.html
+const SCHOOLS = [
+  { code: "CHIANGPHENG", icon: "🌕", img: "assets/crests/1.png",  name: "เชียงเพ็ง",    full: "โรงเรียนเชียงเพ็งวิทยา อบจ.อุดรธานี ๑" },
+  { code: "NASAI",       icon: "🌾", img: "assets/crests/2.png",  name: "นาทราย",      full: "โรงเรียนนาทรายวิทยา อบจ.อุดรธานี ๒" },
+  { code: "CHAINAKHAM",  icon: "🏆", img: "assets/crests/3.png",  name: "ชัยนาคำ",     full: "โรงเรียนชัยนาคำวิทยา อบจ.อุดรธานี ๓" },
+  { code: "PHANDON",     icon: "🏝️", img: "assets/crests/4.png",  name: "พันดอน",      full: "โรงเรียนพันดอนวิทยา อบจ.อุดรธานี ๔" },
+  { code: "PHANGNGU",    icon: "🐍", img: "assets/crests/5.png",  name: "พังงู",        full: "โรงเรียนพังงูวิทยา อบจ.อุดรธานี ๕" },
+  { code: "NAMSUEM",     icon: "💧", img: "assets/crests/6.png",  name: "น้ำซึม",       full: "โรงเรียนน้ำซึมวิทยา อบจ.อุดรธานี ๖" },
+  { code: "CHAELAE",     icon: "🏮", img: "assets/crests/7.png",  name: "แชแล",        full: "โรงเรียนแชแลวิทยา อบจ.อุดรธานี ๗" },
+  { code: "KUNGCHAROEN", icon: "🌳", img: "assets/crests/8.png",  name: "กุงเจริญ",     full: "โรงเรียนกุงเจริญวิทยา อบจ.อุดรธานี ๘" },
+  { code: "MUMON",       icon: "🐷", img: "assets/crests/9.png",  name: "หมูม่น",       full: "โรงเรียนหมูม่นวิทยา อบจ.อุดรธานี ๙" },
+  { code: "CHIANGPHIN",  icon: "🪕", img: "assets/crests/10.png", name: "นิคมเชียงพิณ",  full: "โรงเรียนนิคมเชียงพิณวิทยา อบจ.อุดรธานี ๑๐" },
+];
+const BONUS = [
+  { code: "BUADAENG", icon: "🌺", name: "พลังทะเลบัวแดง", full: "โค้ดลับพิเศษ — โล่ทอง +2 💛" },
+  { code: "NAKA",     icon: "🐉", name: "พรจากพญานาค",   full: "โค้ดลับพิเศษ — โล่ทอง +3 💛" },
+];
+
+function gameUrl(code) {
+  let base = document.getElementById("base").value.trim();
+  if (!base.endsWith("/")) base += "/";
+  return base + "game.html?code=" + code;
+}
+
+// วาด QR ลง canvas เอง (ไลบรารีในเครื่อง ไม่พึ่งอินเทอร์เน็ต/CDN)
+function drawQR(canvas, text, px) {
+  const qr = qrcode(0, "M"); // 0 = เลือกขนาดอัตโนมัติ
+  qr.addData(text);
+  qr.make();
+  const n = qr.getModuleCount(), quiet = 2, total = n + quiet * 2;
+  const cell = Math.max(1, Math.floor(px / total));
+  const size = cell * total;
+  canvas.width = size; canvas.height = size;
+  const c = canvas.getContext("2d");
+  c.fillStyle = "#fff"; c.fillRect(0, 0, size, size);
+  c.fillStyle = "#000";
+  for (let r = 0; r < n; r++)
+    for (let col = 0; col < n; col++)
+      if (qr.isDark(r, col)) c.fillRect((col + quiet) * cell, (r + quiet) * cell, cell, cell);
+}
+
+function build() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  for (const s of SCHOOLS.concat(BONUS)) {
+    const isBonus = BONUS.includes(s);
+    const card = document.createElement("div");
+    card.className = "card" + (isBonus ? " bonus" : "");
+    card.innerHTML =
+      (isBonus ? "<div class='tag'>✨ โค้ดลับพิเศษ ซ่อนให้ค้นหา</div>" : "") +
+      "<div class='ic'></div><h2></h2><p class='full'></p>" +
+      "<canvas></canvas>" +
+      "<div class='code'>" + s.code + "</div>" +
+      "<div class='hint'>สแกนแล้วเปิดลิงก์ → รับ" + (isBonus ? "โล่ทอง" : "ตราในเกม") + "ทันที</div>";
+    const ic = card.querySelector(".ic");
+    if (s.img) { // ตราจริงของโรงเรียน — โหลดไม่ได้ใช้อิโมจิแทน
+      const im = new Image();
+      im.src = s.img; im.alt = s.name;
+      im.onerror = () => { ic.textContent = s.icon; };
+      ic.appendChild(im);
+    } else ic.textContent = s.icon;
+    card.querySelector("h2").textContent = (isBonus ? "" : "ตรา ") + s.name;
+    card.querySelector(".full").textContent = s.full;
+    grid.appendChild(card);
+    try { drawQR(card.querySelector("canvas"), gameUrl(s.code), 360); }
+    catch (e) { card.querySelector(".hint").textContent = "สร้าง QR ไม่สำเร็จ: " + e.message; }
+  }
+}
+document.getElementById("regen").addEventListener("click", build);
+build();
+</script>
+</body>
+</html>

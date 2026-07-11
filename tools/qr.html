@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>สร้าง QR Code</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="../js/qrcode-gen.js"></script>
   <style>
     body {
       font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif;
@@ -51,11 +51,23 @@
     function generate() {
       const text = urlInput.value.trim();
       if (!text) return;
-      QRCode.toCanvas(canvas, text, { width: 280, margin: 2 }, (err) => {
-        if (err) { alert('สร้างไม่สำเร็จ: ' + err); return; }
+      try {
+        const qr = qrcode(0, 'M');
+        qr.addData(text);
+        qr.make();
+        const n = qr.getModuleCount(), quiet = 2, total = n + quiet * 2;
+        const cell = Math.max(1, Math.floor(280 / total));
+        const size = cell * total;
+        canvas.width = size; canvas.height = size;
+        const c = canvas.getContext('2d');
+        c.fillStyle = '#fff'; c.fillRect(0, 0, size, size);
+        c.fillStyle = '#000';
+        for (let r = 0; r < n; r++)
+          for (let col = 0; col < n; col++)
+            if (qr.isDark(r, col)) c.fillRect((col + quiet) * cell, (r + quiet) * cell, cell, cell);
         dl.href = canvas.toDataURL('image/png');
         dl.style.display = 'inline-block';
-      });
+      } catch (err) { alert('สร้างไม่สำเร็จ: ' + err); }
     }
 
     document.getElementById('gen').addEventListener('click', generate);

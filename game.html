@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>พายเรือเก็บบัวแดง 100 ด่าน</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif;
+    background: #16121a; touch-action: none; overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none;
+  }
+  #game { position: fixed; inset: 0; display: block; }
+
+  /* ---------- HUD ---------- */
+  #hud {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: calc(10px + env(safe-area-inset-top)) 14px 0; pointer-events: none;
+    color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.5);
+  }
+  #hud .box {
+    background: rgba(20,12,25,.5); backdrop-filter: blur(4px);
+    border-radius: 14px; padding: 6px 14px;
+  }
+  #hud-level { font-size: 20px; font-weight: 800; line-height: 1.2; }
+  #hud-zone { font-size: 10.5px; opacity: .85; }
+  #hearts { font-size: 17px; letter-spacing: 2px; text-align: right; }
+  #hud-goal { font-size: 12px; text-align: right; margin-top: 2px; font-weight: 700; }
+  #prog {
+    position: fixed; left: 14px; right: 14px; z-index: 5;
+    top: calc(70px + env(safe-area-inset-top));
+    height: 9px; border-radius: 999px; background: rgba(0,0,0,.35); overflow: hidden;
+    pointer-events: none;
+  }
+  #prog-fill {
+    height: 100%; width: 0%; border-radius: 999px;
+    background: linear-gradient(90deg, #ff7ba1, #ffd23f); transition: width .25s;
+  }
+  /* แถบกติกาพิเศษของด่านตำนาน */
+  #sp-bar {
+    position: fixed; left: 50%; transform: translateX(-50%); z-index: 5;
+    top: calc(86px + env(safe-area-inset-top));
+    background: rgba(20,12,25,.55); backdrop-filter: blur(4px);
+    color: #fff; font-size: 13.5px; font-weight: 700;
+    border-radius: 999px; padding: 6px 16px; pointer-events: none;
+    text-shadow: 0 1px 6px rgba(0,0,0,.5); white-space: nowrap;
+  }
+
+  /* ---------- toast (ข้อความเริ่มด่าน) ---------- */
+  #toast {
+    position: fixed; left: 20px; right: 20px; top: 34%; z-index: 6;
+    text-align: center; color: #fff; font-size: 20px; font-weight: 800;
+    text-shadow: 0 2px 10px rgba(0,0,0,.6); pointer-events: none;
+    opacity: 0; transform: scale(.9); transition: opacity .3s, transform .3s;
+  }
+  #toast.show { opacity: 1; transform: scale(1); }
+  #toast small { display: block; font-size: 14px; font-weight: 600; opacity: .9; margin-top: 6px; }
+
+  /* ---------- overlays ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; color: #fff; padding: 24px;
+  }
+  .hidden { display: none !important; }
+  .btn {
+    font-family: inherit; font-size: 18px; font-weight: 800;
+    color: #5a2740; background: #ffd23f; border: none; border-radius: 999px;
+    padding: 14px 32px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  .btn:active { transform: scale(.96); }
+  .btn.ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: none; }
+
+  /* ---------- หน้าเลือกด่าน ---------- */
+  #menu {
+    z-index: 20; display: block; overflow-y: auto; touch-action: pan-y;
+    padding: 0 0 110px;
+    background: linear-gradient(160deg, rgba(74,28,52,.97) 0%, rgba(118,48,74,.96) 60%, rgba(160,84,100,.95) 100%);
+  }
+  #menu .inner { max-width: 430px; margin: 0 auto; padding: calc(18px + env(safe-area-inset-top)) 18px 0; }
+  #menu .org { font-size: 12.5px; opacity: .85; text-align: center; }
+  #menu h1 { font-size: 26px; font-weight: 800; margin: 4px 0 2px; text-align: center; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
+  #total-stars { text-align: center; font-size: 15px; font-weight: 800; color: #ffd23f; margin-bottom: 8px; }
+  #menu .how {
+    font-size: 12.5px; line-height: 1.8; text-align: center;
+    background: rgba(0,0,0,.22); border-radius: 14px; padding: 9px 12px; margin-bottom: 16px;
+  }
+  .zone-h {
+    display: flex; align-items: center; gap: 10px;
+    margin: 18px 2px 10px; font-size: 14.5px; font-weight: 800;
+  }
+  .zone-h .chip { width: 34px; height: 20px; border-radius: 7px; flex: none; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+  .zone-h small { font-weight: 600; opacity: .7; font-size: 11px; margin-left: auto; }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; }
+  .lv {
+    aspect-ratio: 1; border: none; border-radius: 15px; cursor: pointer;
+    font-family: inherit; font-size: 16.5px; font-weight: 800; color: #fff;
+    background: rgba(255,255,255,.14); position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  }
+  .lv:active { transform: scale(.94); }
+  .lv.locked { color: rgba(255,255,255,.4); background: rgba(0,0,0,.22); cursor: default; font-size: 14px; }
+  .lv.done { background: rgba(255,210,63,.2); }
+  .lv.cur { background: #ffd23f; color: #5a2740; box-shadow: 0 0 0 3px rgba(255,255,255,.75), 0 4px 14px rgba(0,0,0,.35); }
+  .lv .st { font-size: 9.5px; letter-spacing: 1px; line-height: 1; color: #ffd23f; }
+  .lv.cur .st { color: #a05a2c; }
+  .lv .st .off { color: rgba(255,255,255,.3); }
+  .lv.legend { box-shadow: inset 0 0 0 2px rgba(255,210,63,.6); }
+  .lv.legend.cur { box-shadow: inset 0 0 0 2px rgba(255,210,63,.6), 0 0 0 3px rgba(255,255,255,.75); }
+  .lv .ic { font-size: 13px; line-height: 1.15; }
+  .lv.locked .ic { opacity: .55; font-size: 11px; }
+  .lv .num-s { font-size: 12px; line-height: 1; opacity: .9; }
+  #cont-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 21;
+    padding: 12px 18px calc(14px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, transparent, rgba(40,10,28,.92) 40%);
+    display: flex; justify-content: center;
+  }
+  #cont-btn { width: 100%; max-width: 394px; font-size: 19px; }
+
+  /* ---------- ผ่านด่าน / ไม่ผ่าน ---------- */
+  #win { background: linear-gradient(160deg, rgba(60,24,46,.95), rgba(130,56,84,.93)); z-index: 15; }
+  #win-stars { font-size: 52px; letter-spacing: 6px; margin: 2px 0 4px; }
+  #win-stars .off { opacity: .25; filter: grayscale(1); }
+  #win h1 { font-size: 26px; margin: 0; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
+  #win-sub { font-size: 15px; opacity: .95; margin: 6px 0 14px; }
+  .fact-card {
+    background: linear-gradient(160deg, #fff6ec, #ffe9ef); color: #5a2740;
+    border-radius: 18px; padding: 14px 18px; max-width: 330px; margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  .fact-card b { color: #c2497a; font-size: 13px; }
+  .fact-card p { font-size: 14.5px; line-height: 1.7; margin: 5px 0 0; }
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  #lose { background: linear-gradient(160deg, rgba(45,16,34,.96), rgba(90,34,58,.94)); z-index: 15; }
+  #lose .big { font-size: 54px; margin-bottom: 6px; }
+  #lose h1 { font-size: 26px; margin: 0 0 6px; }
+  #lose p { font-size: 14.5px; opacity: .9; margin: 0 0 22px; }
+
+  #paused { background: rgba(20,8,16,.75); font-size: 20px; font-weight: 700; z-index: 15; }
+
+  /* ---------- ปุ่มพิเศษในเมนู + ตราโรงเรียน ---------- */
+  .act-row { display: flex; gap: 9px; margin-bottom: 12px; }
+  .act-row .btn { flex: 1; font-size: 14.5px; padding: 11px 8px; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
+  .act-row .btn.ar { background: linear-gradient(135deg, #ffd23f, #ff9d5c); }
+  .act-row .btn.qr { background: linear-gradient(135deg, #b087e0, #7a5cd0); color: #fff; }
+  #badges { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px 4px; font-size: 22px;
+    background: rgba(0,0,0,.22); border-radius: 14px; padding: 9px 8px 7px; margin-bottom: 16px; }
+  #badges .bd { text-align: center; line-height: 1.15; }
+  #badges .bd.off { filter: grayscale(1); opacity: .35; }
+  #badges .bd small { display: block; font-size: 8px; opacity: .85; margin-top: 1px; font-weight: 700; }
+  #badges .bd img.crest { width: 36px; height: 36px; object-fit: contain; display: block; margin: 0 auto;
+    border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+  #gift-icon img { width: 84px; height: 84px; object-fit: contain; border-radius: 50%;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+
+  /* ---------- โหมดล่าสมบัติ AR ---------- */
+  #ar { z-index: 30; padding: 0; background: #000; }
+  #ar-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  #ar.no-cam #ar-video { display: none; }
+  #ar.no-cam { background: radial-gradient(120% 100% at 50% 0%, #3a2f5c, #1c1633 55%, #0d0a1c); }
+  #ar-cvs { position: absolute; inset: 0; }
+  #ar-hint { position: absolute; top: calc(16px + env(safe-area-inset-top)); left: 20px; right: 20px;
+    text-align: center; font-size: 14.5px; font-weight: 700; text-shadow: 0 2px 8px rgba(0,0,0,.8);
+    background: rgba(0,0,0,.4); border-radius: 999px; padding: 9px 14px; }
+  #ar-count { position: absolute; top: calc(66px + env(safe-area-inset-top)); left: 0; right: 0;
+    text-align: center; font-size: 22px; font-weight: 800; text-shadow: 0 2px 8px rgba(0,0,0,.8); }
+  #ar-close { position: absolute; bottom: calc(24px + env(safe-area-inset-bottom)); left: 50%;
+    transform: translateX(-50%); background: rgba(0,0,0,.5); }
+
+  /* ---------- ป๊อปอัปรางวัล / ใส่โค้ดลับ ---------- */
+  #gift { z-index: 40; background: rgba(20,8,16,.78); }
+  #code-modal { z-index: 35; background: rgba(20,8,16,.78); }
+  .gift-card { background: linear-gradient(160deg, #fff6ec, #ffe9ef); color: #5a2740;
+    border-radius: 22px; padding: 24px 26px; max-width: 320px; width: 100%; text-align: center;
+    box-shadow: 0 14px 44px rgba(0,0,0,.5); }
+  .gift-card h2 { margin: 6px 0 4px; font-size: 21px; }
+  .gift-card p { font-size: 14px; line-height: 1.65; margin: 0 0 16px; opacity: .85; }
+  #gift-icon { font-size: 52px; }
+  #code-input { width: 100%; font: inherit; font-size: 18px; font-weight: 700; text-align: center;
+    text-transform: uppercase; border: 2px solid #e8a0bc; border-radius: 12px; padding: 10px;
+    margin-bottom: 14px; color: #5a2740; background: #fff; outline: none;
+    -webkit-user-select: text; user-select: text; }
+</style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="box"><div id="hud-level">ด่าน 1</div><div id="hud-zone">รุ่งอรุณริมหนองหาน</div></div>
+  <div class="box"><div id="hearts">❤️❤️❤️</div><div id="hud-goal">🌸 0/8</div></div>
+</div>
+<div id="prog" class="hidden"><div id="prog-fill"></div></div>
+<div id="sp-bar" class="hidden"></div>
+<div id="toast"></div>
+
+<!-- หน้าเลือกด่าน -->
+<div id="menu" class="overlay">
+  <div class="inner">
+    <div class="org">องค์การบริหารส่วนจังหวัดอุดรธานี</div>
+    <h1>🛶 พายเรือเก็บบัวแดง</h1>
+    <div id="total-stars">⭐ 0/300</div>
+    <div class="how">ลากนิ้วซ้าย–ขวาบังคับเรือเป็ดน้อย • 🌸 บัวแดง +1 • ⭐ บัวทอง +3<br />หลบ 🌿 ผักตบชวา 🪵 ท่อนไม้ ⛵ เรือประมง — ชนแล้วเสียหัวใจ!<br />ด่านลงท้ายด้วย 0 = <b>ด่านตำนาน ✨</b> กติกาพิเศษไม่เหมือนใคร<br />💛 โล่ทองกันชนได้ 1 ครั้ง — หาจาก 📷 ล่าสมบัติ AR และ 🔑 โค้ดลับ QR</div>
+    <div class="act-row">
+      <button id="ar-btn" class="btn ar">📷 ล่าสมบัติ AR</button>
+      <button id="code-btn" class="btn qr">🔑 โค้ดลับ QR</button>
+    </div>
+    <div id="badges"></div>
+    <div id="level-grid"></div>
+  </div>
+</div>
+<div id="cont-bar"><button id="cont-btn" class="btn">▶ เล่นด่าน 1</button></div>
+
+<!-- ผ่านด่าน -->
+<div id="win" class="overlay hidden">
+  <h1 id="win-title">ผ่านด่าน 1!</h1>
+  <div id="win-stars"></div>
+  <div id="win-sub"></div>
+  <div class="fact-card"><b>🌸 รู้หรือไม่?</b><p id="win-fact"></p></div>
+  <div class="btn-row">
+    <button id="next-btn" class="btn">ด่านต่อไป ▶</button>
+    <button id="replay-btn" class="btn ghost">🔁 เล่นซ้ำ</button>
+    <button id="win-menu-btn" class="btn ghost">🏠 หน้าด่าน</button>
+  </div>
+</div>
+
+<!-- ไม่ผ่านด่าน -->
+<div id="lose" class="overlay hidden">
+  <div class="big">💔</div>
+  <h1>หัวใจหมดแล้ว!</h1>
+  <p id="lose-sub">ไม่เป็นไร ลองใหม่อีกครั้ง เธอทำได้!</p>
+  <div class="btn-row">
+    <button id="lose-retry" class="btn">🔁 ลองอีกครั้ง</button>
+    <button id="lose-menu-btn" class="btn ghost">🏠 หน้าด่าน</button>
+  </div>
+</div>
+
+<!-- พักเกม -->
+<div id="paused" class="overlay hidden">⏸ พักเกม<br /><span style="font-size:15px;opacity:.85;font-weight:400">แตะที่หน้าจอเพื่อเล่นต่อ</span></div>
+
+<!-- โหมดล่าสมบัติ AR -->
+<div id="ar" class="overlay hidden">
+  <video id="ar-video" playsinline muted autoplay></video>
+  <canvas id="ar-cvs"></canvas>
+  <div id="ar-hint">👀 หมุนหา "บัวทองวิเศษ" รอบตัว แล้วแตะเก็บให้ครบ!</div>
+  <div id="ar-count">🌟 0/3</div>
+  <button id="ar-close" class="btn ghost">✖ ปิดกล้อง</button>
+</div>
+
+<!-- ป๊อปอัปรางวัล -->
+<div id="gift" class="overlay hidden">
+  <div class="gift-card">
+    <div id="gift-icon">🎁</div>
+    <h2 id="gift-title"></h2>
+    <p id="gift-sub"></p>
+    <button id="gift-ok" class="btn">รับเลย! 🎉</button>
+  </div>
+</div>
+
+<!-- ใส่โค้ดลับ -->
+<div id="code-modal" class="overlay hidden">
+  <div class="gift-card">
+    <div style="font-size:40px">🔑</div>
+    <h2>โค้ดลับ QR</h2>
+    <p>สแกน QR ลับที่โปสเตอร์ของโรงเรียนแล้วเปิดลิงก์ หรือพิมพ์โค้ดที่นี่</p>
+    <input id="code-input" placeholder="พิมพ์โค้ดลับ..." autocomplete="off" />
+    <div class="btn-row">
+      <button id="code-ok" class="btn">ยืนยัน</button>
+      <button id="code-cancel" class="btn ghost" style="color:#5a2740">ปิด</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ============================================================
+//  พายเรือเก็บบัวแดง — โหมดผจญภัย 100 ด่าน (ไฟล์เดียวจบ)
+//  10 โซน × 10 ด่าน • ด่านลงท้ายด้วย 0 = "ด่านตำนาน" กติกาเฉพาะตัว
+// ============================================================
+
+const cvs = document.getElementById("game");
+const ctx = cvs.getContext("2d");
+let W = 0, H = 0;
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cvs.width = W * dpr; cvs.height = H * dpr;
+  cvs.style.width = W + "px"; cvs.style.height = H + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+// ---------- 10 โซนบรรยากาศ (ด่านละ 10) ----------
+const ZONES = [
+  { name: "รุ่งอรุณริมหนองหาน",  w1: "#8a5a7a", w2: "#6d4468", w3: "#4a2c50", glint: "255,215,170" },
+  { name: "เช้าทองของทะเลบัว",   w1: "#a8825f", w2: "#7d5a4f", w3: "#4e3542", glint: "255,230,160" },
+  { name: "สายวันฟ้าใส",         w1: "#5a7ab0", w2: "#40587f", w3: "#2b3a57", glint: "210,235,255" },
+  { name: "เที่ยงแดดจ้า",         w1: "#58a0a8", w2: "#3f7b85", w3: "#295462", glint: "255,255,220" },
+  { name: "บ่ายลมโชย",           w1: "#4f9a7f", w2: "#3a7563", w3: "#234a41", glint: "220,255,230", wind: true },
+  { name: "เย็นย่ำตะวันรอน",      w1: "#c07a4a", w2: "#8f5540", w3: "#55333a", glint: "255,200,140" },
+  { name: "อาทิตย์อัสดง",         w1: "#a05560", w2: "#74405a", w3: "#45264a", glint: "255,170,150", wind: true },
+  { name: "คืนจันทร์กระจ่าง",     w1: "#2c3a66", w2: "#1f2a4d", w3: "#131a33", glint: "190,210,255", night: true },
+  { name: "สายฝนโปรยปราย",       w1: "#56687a", w2: "#3e4c5e", w3: "#283442", glint: "200,215,230", rain: true },
+  { name: "พายุกลางหนองหาน",     w1: "#3a4452", w2: "#2a303e", w3: "#191d28", glint: "180,195,215", rain: true, wind: true },
+];
+
+// ---------- ด่านตำนาน (ด่านลงท้ายด้วย 0) — กติกาเฉพาะตัว ----------
+const LEGEND = {
+  10:  { name: "บัวบานรับตะวัน",    icon: "🌺", tip: "บัวหุบอยู่เก็บไม่ได้ — รอจังหวะบานแล้วค่อยเก็บ!" },
+  20:  { name: "แกงส้มสายบัวคุณยาย", icon: "🍲", tip: "เก็บบัวตามสีที่ยายสั่ง ทีละดอก ผิดสีไม่นับนะ" },
+  30:  { name: "ขบวนเป็ดน้อย",      icon: "🦆", tip: "เป็ดน้อย 3 ตัวช่วยเก็บบัว — อย่าให้ของลอยชนเป็ด!" },
+  40:  { name: "บั้งไฟพญานาค",      icon: "🎆", tip: "ดวงไฟผุดขึ้นจากน้ำ รับให้ทัน ได้ทีละ +2!" },
+  50:  { name: "น้ำวนปริศนา",       icon: "🌀", tip: "น้ำวนดูดทุกอย่างหมุนติ้ว แม้แต่เรือของเธอ!" },
+  60:  { name: "ตลาดน้ำยามเย็น",    icon: "🛶", tip: "เก็บบัวใส่ตะกร้า (เต็มที่ 5) แล้วพายไปชนเรือแม่ค้าเพื่อส่งของ" },
+  70:  { name: "หอคอยดอกบัว",      icon: "🗼", tip: "บัวซ้อนเป็นหอบนเรือ — ขยับนุ่ม ๆ กระชากแรงบัวร่วง!" },
+  80:  { name: "ลำแสงจันทรา",      icon: "🌙", tip: "มืดสนิท มองเห็นเฉพาะในลำแสงจันทร์ที่กวาดไปมา" },
+  90:  { name: "เมฆฝนเบิกบาน",     icon: "🌧️", tip: "พาเมฆฝนไปรดบัวตูมให้บานก่อน แล้วค่อยเก็บ" },
+  100: { name: "พญานาคหนองหาน",   icon: "🐉", tip: "ตำนานสุดท้าย! หลบลำตัวพญานาค เก็บบัวทองที่ร่วงจากปาก" },
+};
+
+// ---------- เกร็ดความรู้ (หมุนเวียนโชว์ตอนผ่านด่าน) ----------
+const FACTS = [
+  "ทะเลบัวแดงอยู่ที่ทะเลสาบหนองหาน อำเภอกุมภวาปี จังหวัดอุดรธานี บ้านเราเอง!",
+  "บัวแดงจะบานเต็มทะเลสาบช่วงเดือนธันวาคมถึงกุมภาพันธ์ของทุกปี",
+  "ดอกบัวแดงบานตอนเช้าตรู่ แล้วจะเริ่มหุบช่วงสาย ใครอยากชมต้องไปก่อน 11 โมง!",
+  "ดอกบัวในทะเลบัวแดงคือ \"บัวสาย\" สีชมพูแดง คนละชนิดกับบัวหลวง",
+  "สื่อต่างประเทศอย่าง CNN เคยยกให้ทะเลบัวแดงเป็นหนึ่งในทะเลสาบสวยแปลกของโลก",
+  "หนองหานเป็นพื้นที่ชุ่มน้ำขนาดใหญ่ เป็นบ้านของนกน้ำและปลาหลายชนิด",
+  "ชาวบ้านรอบหนองหานเก็บสายบัวมาทำอาหาร เช่น แกงส้มสายบัว อร่อยมาก",
+  "ผักตบชวาที่เราหลบในเกม เป็นพืชต่างถิ่นที่โตเร็วจนกีดขวางทางน้ำจริง ๆ",
+  "อุดรธานีมีมรดกโลก \"บ้านเชียง\" แหล่งโบราณคดีอายุราว 5,000 ปี",
+  "นั่งเรือชมทะเลบัวแดงของจริง ใช้เวลาประมาณ 1–1.5 ชั่วโมงต่อรอบ",
+  "ตำนานพื้นบ้าน \"ผาแดง–นางไอ่\" เล่าขานถึงกำเนิดหนองหานมาแต่โบราณ",
+  "ช่วงอากาศเย็นปลายปี ดอกบัวแดงจะบานพร้อมกันมากที่สุด สวยสุดตา",
+  "ฤดูหนาวจะมีนกเป็ดน้ำอพยพหนีหนาวจากแดนไกล มาอาศัยที่หนองหาน",
+  "บัวสายชอบน้ำนิ่งตื้น รากฝังในโคลน ก้านยาวขึ้นมาตามระดับน้ำ",
+  "การท่องเที่ยวทะเลบัวแดงช่วยสร้างรายได้ให้ชุมชนรอบหนองหานมากมาย",
+  "\"คำชะโนด\" เกาะกลางน้ำปกคลุมด้วยต้นชะโนด ก็เป็นที่เที่ยวดังของอุดรธานี",
+  "กรมหลวงประจักษ์ศิลปาคม คือผู้ก่อตั้งเมืองอุดรธานีเมื่อ พ.ศ. 2436",
+  "อุทยานประวัติศาสตร์ภูพระบาท ได้เป็นมรดกโลกแห่งที่ 2 ของอุดรธานีในปี 2567",
+  "เรือที่ใช้ชมทะเลบัวแดงต้องแล่นช้า ๆ ตามเส้นทาง เพื่อไม่ให้ใบพัดตัดดอกบัว",
+  "หนองหานกุมภวาปีเป็นแหล่งน้ำต้นทุนสำคัญของลำน้ำปาว",
+  "เป็ดเหลืองยักษ์ลอยน้ำที่หนองประจักษ์ คือแลนด์มาร์กกลางเมืองอุดรฯ — กัปตันเรือของเราก็มาจากที่นั่นแหละ!",
+];
+
+// ---------- ค่าความยากของแต่ละด่าน ----------
+const TOTAL = 100;
+function levelConfig(n) {
+  const zone = ZONES[Math.min(9, Math.floor((n - 1) / 10))];
+  const legend = LEGEND[n] || null;
+  const c = {
+    n, zone, legend,
+    quota: 8 + Math.floor(n * 0.32) + (legend ? 5 : 0),
+    speedMul: 1 + (n - 1) * 0.016 + (legend ? 0.1 : 0),
+    spawnInt: Math.max(0.3, 0.85 - n * 0.005) * (legend ? 0.9 : 1),
+    obstacle: Math.min(0.45, 0.16 + n * 0.003) + (legend ? 0.06 : 0),
+    golden: legend ? 0.14 : 0.05,
+    fisher: n >= 21,
+    windMax: zone.wind ? 26 + n * 0.5 : 0,
+    follow: zone.rain ? 7.5 : 12,
+  };
+  // ปรับกติกาเฉพาะด่านตำนาน
+  if (n === 20)  { c.golden = 0; c.obstacle = 0.2; }
+  if (n === 40)  { c.golden = 0.04; }
+  if (n === 60)  { c.golden = 0; c.obstacle = 0.3; c.fisher = false; }
+  if (n === 80)  { c.obstacle = 0.3; }
+  if (n === 90)  { c.quota = Math.round(c.quota * 0.7); c.obstacle = 0.15; }
+  if (n === 100) { c.quota = 30; c.obstacle = 0; c.fisher = false; c.golden = 0; c.spawnInt = 0.75; }
+  return c;
+}
+
+// ---------- ไอเท็มพิเศษ: ตราโรงเรียน อบจ.อุดรธานี ทั้ง 10 แห่ง (จาก QR) + โล่ทอง ----------
+const BADGES = { // img = ตราจริงของโรงเรียน, icon = อิโมจิสำรองถ้ารูปโหลดไม่ได้
+  CHIANGPHENG: { icon: "🌕", img: "assets/crests/1.png",  name: "เชียงเพ็ง",    full: "โรงเรียนเชียงเพ็งวิทยา อบจ.อุดรธานี ๑" },
+  NASAI:       { icon: "🌾", img: "assets/crests/2.png",  name: "นาทราย",      full: "โรงเรียนนาทรายวิทยา อบจ.อุดรธานี ๒" },
+  CHAINAKHAM:  { icon: "🏆", img: "assets/crests/3.png",  name: "ชัยนาคำ",     full: "โรงเรียนชัยนาคำวิทยา อบจ.อุดรธานี ๓" },
+  PHANDON:     { icon: "🏝️", img: "assets/crests/4.png",  name: "พันดอน",      full: "โรงเรียนพันดอนวิทยา อบจ.อุดรธานี ๔" },
+  PHANGNGU:    { icon: "🐍", img: "assets/crests/5.png",  name: "พังงู",        full: "โรงเรียนพังงูวิทยา อบจ.อุดรธานี ๕" },
+  NAMSUEM:     { icon: "💧", img: "assets/crests/6.png",  name: "น้ำซึม",       full: "โรงเรียนน้ำซึมวิทยา อบจ.อุดรธานี ๖" },
+  CHAELAE:     { icon: "🏮", img: "assets/crests/7.png",  name: "แชแล",        full: "โรงเรียนแชแลวิทยา อบจ.อุดรธานี ๗" },
+  KUNGCHAROEN: { icon: "🌳", img: "assets/crests/8.png",  name: "กุงเจริญ",     full: "โรงเรียนกุงเจริญวิทยา อบจ.อุดรธานี ๘" },
+  MUMON:       { icon: "🐷", img: "assets/crests/9.png",  name: "หมูม่น",       full: "โรงเรียนหมูม่นวิทยา อบจ.อุดรธานี ๙" },
+  CHIANGPHIN:  { icon: "🪕", img: "assets/crests/10.png", name: "นิคมเชียงพิณ",  full: "โรงเรียนนิคมเชียงพิณวิทยา อบจ.อุดรธานี ๑๐" },
+};
+const BADGE_COUNT = Object.keys(BADGES).length;
+// โค้ดลับโบนัส (ไม่ใช่ตรา ใช้ได้ครั้งเดียว)
+const BONUS = {
+  BUADAENG: { icon: "🌺", title: "พลังทะเลบัวแดง!", sub: "ได้โล่ทอง +2 💛 จากดอกบัวหมื่นไร่แห่งหนองหาน", sh: 2 },
+  NAKA:     { icon: "🐉", title: "พรจากพญานาค!",   sub: "ได้โล่ทอง +3 💛 คุ้มครองการเดินทางกลางหนองหาน", sh: 3 },
+};
+const SHIELD_MAX = 5;
+
+// ---------- ความคืบหน้า (บันทึกในเครื่อง) ----------
+// sh = โล่ทอง, b = ตราโรงเรียน + โค้ดลับที่รับแล้ว, ar = วันที่ล่าสมบัติล่าสุด
+let progress = { u: 1, s: {}, sh: 0, b: [], ar: "" };
+try {
+  const raw = JSON.parse(localStorage.getItem("buaDaeng100") || "{}");
+  if (raw && typeof raw.u === "number") progress = {
+    u: Math.min(Math.max(raw.u, 1), TOTAL), s: raw.s || {},
+    sh: raw.sh || 0, b: raw.b || [], ar: raw.ar || "" };
+} catch (e) {}
+function allBadges() { return Object.keys(BADGES).every(k => progress.b.includes(k)); }
+function addShield(n) { progress.sh = Math.min(SHIELD_MAX, progress.sh + n); saveProgress(); }
+function saveProgress() { try { localStorage.setItem("buaDaeng100", JSON.stringify(progress)); } catch (e) {} }
+function totalStars() { return Object.values(progress.s).reduce((a, b) => a + b, 0); }
+
+// ---------- สถานะเกม ----------
+const S = { MENU: 0, PLAY: 1, WIN: 2, LOSE: 3, PAUSE: 4 };
+let state = S.MENU;
+let cfg = levelConfig(1);
+let hearts = 3, collected = 0, spawnTimer = 0, invuln = 0, shake = 0, windSeed = 0;
+let sp = {}; // ข้อมูลเฉพาะด่านตำนาน
+
+const boat = { x: 0, tx: 0, w: 88, rock: 0 };
+let items = [], particles = [], floaters = [], pads = [], drops = [];
+
+function makePads() {
+  pads = [];
+  for (let i = 0; i < 14; i++) {
+    pads.push({ x: Math.random() * W, y: Math.random() * H, s: 10 + Math.random() * 16, v: 12 + Math.random() * 10, ph: Math.random() * 7 });
+  }
+}
+makePads();
+function makeRain() {
+  drops = [];
+  for (let i = 0; i < 90; i++) {
+    drops.push({ x: Math.random() * W, y: Math.random() * H, v: 520 + Math.random() * 220, len: 10 + Math.random() * 8 });
+  }
+}
+
+// ---------- เสียง (WebAudio สร้างเองไม่ใช้ไฟล์) ----------
+let actx = null;
+function initAudio() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+  if (actx && actx.state === "suspended") actx.resume();
+}
+function tone(freq, dur, type, vol, delay) {
+  if (!actx) return;
+  const t0 = actx.currentTime + (delay || 0);
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol || 0.15, t0);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t0); o.stop(t0 + dur + 0.02);
+}
+const sfx = {
+  catch()  { tone(660, .1, "sine", .18); tone(880, .12, "sine", .14, .06); },
+  golden() { [660, 830, 990, 1320].forEach((f, i) => tone(f, .12, "triangle", .16, i * .07)); },
+  hit()    { tone(140, .25, "square", .2); tone(90, .3, "square", .15, .05); },
+  win()    { [523, 659, 784, 1046].forEach((f, i) => tone(f, .16, "triangle", .16, i * .1)); },
+  lose()   { [400, 320, 240, 170].forEach((f, i) => tone(f, .22, "sine", .16, i * .14)); },
+  quack()  { tone(320, .08, "square", .12); tone(260, .1, "square", .1, .09); },
+  deliver(){ [784, 988, 1175].forEach((f, i) => tone(f, .1, "triangle", .15, i * .06)); },
+};
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
+const hud = $("hud"), prog = $("prog"), spBar = $("sp-bar");
+
+function updateHUD() {
+  $("hud-level").textContent = "ด่าน " + cfg.n + (cfg.legend ? " ✨" : "");
+  $("hud-zone").textContent = cfg.legend ? cfg.legend.icon + " " + cfg.legend.name : cfg.zone.name;
+  $("hearts").textContent = "💛".repeat(progress.sh) + "❤️".repeat(hearts) + "🖤".repeat(Math.max(0, 3 - hearts));
+  $("hud-goal").textContent = (cfg.n === 60 ? "🧺➜🛶 " : "🌸 ") + collected + "/" + cfg.quota;
+  $("prog-fill").style.width = Math.min(100, (collected / cfg.quota) * 100) + "%";
+  updateSpBar();
+}
+const EMO = { p: "🌸", w: "🤍", g: "⭐" };
+function updateSpBar() {
+  if (!cfg.legend || state === S.MENU) { spBar.classList.add("hidden"); return; }
+  let txt = "";
+  if (cfg.n === 20 && sp.order) txt = "ยายสั่ง: " + sp.order.slice(0, 3).map((c, i) => (i === 0 ? "➜" : "") + EMO[c]).join(" ");
+  else if (cfg.n === 30 && sp.ducks) txt = "เป็ดน้อย: " + sp.ducks.map(d => d.flee > 0 ? "💦" : "🦆").join(" ");
+  else if (cfg.n === 60) txt = "🧺 ตะกร้า: " + "🌸".repeat(sp.basket || 0) + "·".repeat(Math.max(0, 5 - (sp.basket || 0))) + (sp.basket >= 5 ? " เต็ม! ไปส่งเรือแม่ค้า" : "");
+  else if (cfg.n === 70) txt = "🗼 หอบัวสูง " + collected + " ดอก — ขยับนุ่ม ๆ นะ";
+  if (txt) { spBar.textContent = txt; spBar.classList.remove("hidden"); }
+  else spBar.classList.add("hidden");
+}
+function showOnly(ids) {
+  ["menu", "win", "lose", "paused"].forEach(id => $(id).classList.toggle("hidden", !ids.includes(id)));
+  $("cont-bar").classList.toggle("hidden", !ids.includes("menu"));
+  const playing = ids.length === 0;
+  hud.classList.toggle("hidden", !playing);
+  prog.classList.toggle("hidden", !playing);
+  if (!playing) spBar.classList.add("hidden");
+}
+let toastTimer = 0;
+function toast(main, sub, ms) {
+  $("toast").innerHTML = "";
+  $("toast").appendChild(document.createTextNode(main));
+  if (sub) { const s = document.createElement("small"); s.textContent = sub; $("toast").appendChild(s); }
+  $("toast").classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.remove("show"), ms || 2000);
+}
+
+// ---------- หน้าเลือกด่าน ----------
+function starStr(n) {
+  let s = "";
+  for (let i = 1; i <= 3; i++) s += "<span" + (i <= n ? "" : " class='off'") + ">★</span>";
+  return s;
+}
+function buildMenu() {
+  $("total-stars").textContent = "⭐ " + totalStars() + "/" + TOTAL * 3 + (progress.sh ? "  •  💛×" + progress.sh : "");
+  const bd = $("badges");
+  bd.innerHTML = "";
+  for (const k in BADGES) {
+    const own = progress.b.includes(k);
+    const el = document.createElement("div");
+    el.className = "bd" + (own ? "" : " off");
+    const im = new Image(); // ตราจริงของโรงเรียน — โหลดไม่ได้ใช้อิโมจิแทน
+    im.src = BADGES[k].img; im.alt = BADGES[k].name; im.className = "crest";
+    im.onerror = () => { const sp = document.createElement("span"); sp.textContent = BADGES[k].icon; im.replaceWith(sp); };
+    el.appendChild(im);
+    const sm = document.createElement("small");
+    sm.textContent = own ? BADGES[k].name : "???";
+    el.appendChild(sm);
+    bd.appendChild(el);
+  }
+  const grid = $("level-grid");
+  grid.innerHTML = "";
+  for (let z = 0; z < 10; z++) {
+    const zone = ZONES[z];
+    const head = document.createElement("div");
+    head.className = "zone-h";
+    head.innerHTML = "<span class='chip' style='background:linear-gradient(135deg," + zone.w1 + "," + zone.w3 + ")'></span>" +
+      "<span></span><small>ด่าน " + (z * 10 + 1) + "–" + (z * 10 + 10) + "</small>";
+    head.children[1].textContent = zone.name;
+    grid.appendChild(head);
+    const g = document.createElement("div");
+    g.className = "grid";
+    for (let i = 1; i <= 10; i++) {
+      const n = z * 10 + i;
+      const legend = LEGEND[n];
+      const b = document.createElement("button");
+      b.className = "lv" + (legend ? " legend" : "");
+      const stars = progress.s[n] || 0;
+      if (n > progress.u) {
+        b.classList.add("locked");
+        b.innerHTML = "<span>🔒</span>" + (legend ? "<span class='ic'>" + legend.icon + "</span>" : "");
+      } else {
+        if (stars > 0) b.classList.add("done");
+        if (n === progress.u) b.classList.add("cur");
+        b.innerHTML = legend
+          ? "<span class='num-s'>" + n + "</span><span class='ic'>" + legend.icon + "</span>" + (stars > 0 ? "<span class='st'>" + starStr(stars) + "</span>" : "")
+          : "<span>" + n + "</span>" + (stars > 0 ? "<span class='st'>" + starStr(stars) + "</span>" : "");
+        b.addEventListener("click", () => { initAudio(); startLevel(n); });
+      }
+      g.appendChild(b);
+    }
+    grid.appendChild(g);
+  }
+  const next = Math.min(progress.u, TOTAL);
+  $("cont-btn").textContent = totalStars() >= TOTAL * 3 ? "🏆 เก็บครบ 300 ดาวแล้ว สุดยอด!" : "▶ เล่นด่าน " + next;
+  requestAnimationFrame(() => {
+    const cur = grid.querySelector(".lv.cur");
+    if (cur) cur.scrollIntoView({ block: "center" });
+    else $("menu").scrollTop = 0;
+  });
+}
+function openMenu() { state = S.MENU; buildMenu(); showOnly(["menu"]); }
+$("cont-btn").addEventListener("click", () => { initAudio(); startLevel(Math.min(progress.u, TOTAL)); });
+
+// ---------- เริ่ม / จบด่าน ----------
+function startLevel(n) {
+  cfg = levelConfig(n);
+  hearts = 3; collected = 0; spawnTimer = 0.4; invuln = 0; shake = 0;
+  windSeed = n * 7.3;
+  items = []; particles = []; floaters = [];
+  boat.x = boat.tx = W / 2;
+  if (cfg.zone.rain) makeRain(); else drops = [];
+
+  // เตรียมข้อมูลด่านตำนาน
+  sp = {};
+  if (n === 20) { sp.order = []; for (let i = 0; i < 30; i++) sp.order.push(["p", "w", "g"][Math.floor(Math.random() * 3)]); sp.wrongCd = 0; }
+  if (n === 30) sp.ducks = [0, 1, 2].map(i => ({ i, x: W / 2 + (i - 1) * 46, flee: 0 }));
+  if (n === 40) sp.fireT = 1.2;
+  if (n === 50) sp.wp = { x: W * 0.5, y: H * 0.4, vx: 42, vy: 18, R: Math.min(190, W * 0.42) };
+  if (n === 60) { sp.basket = 0; sp.vendT = 2.5; }
+  if (n === 70) { sp.px = boat.x; sp.vel = 0; sp.spillCd = 0; }
+  if (n === 90) sp.cloudX = W / 2;
+  if (n === 100) { sp.hist = []; sp.spitT = 2.5; sp.mouth = 0; }
+
+  showOnly([]);
+  updateHUD();
+  if (cfg.legend) toast(cfg.legend.icon + " ด่านตำนาน: " + cfg.legend.name, cfg.legend.tip, 3600);
+  else toast("ด่าน " + n, "เก็บบัวให้ครบ " + cfg.quota + " ดอก" + (n === 1 ? " — ลากนิ้วบังคับเรือ" : ""));
+  state = S.PLAY; last = performance.now();
+}
+
+function winLevel() {
+  sfx.win();
+  state = S.WIN;
+  const stars = Math.max(1, hearts);
+  if (!sp._test) { // ด่านที่เข้าผ่านโหมดทดสอบ ไม่บันทึกความคืบหน้า
+    const prev = progress.s[cfg.n] || 0;
+    if (stars > prev) progress.s[cfg.n] = stars;
+    if (cfg.n >= progress.u && cfg.n < TOTAL) progress.u = cfg.n + 1;
+    saveProgress();
+  }
+  const isFinal = cfg.n === TOTAL;
+  $("win-title").textContent = isFinal ? "🎉 ปราบพญานาค ครบ 100 ด่าน! 🎉"
+    : cfg.legend ? "✨ ผ่านด่านตำนาน \"" + cfg.legend.name + "\"!"
+    : "ผ่านด่าน " + cfg.n + "!";
+  $("win-stars").innerHTML = starStr(stars);
+  $("win-sub").textContent = isFinal
+    ? "สุดยอดนักพายเรือแห่งหนองหาน! ⭐ รวม " + totalStars() + "/300 ดวง"
+    : (cfg.n === 60 ? "ส่งบัวครบ " : "เก็บบัวครบ ") + cfg.quota + " ดอก • ได้ " + stars + " ดาว";
+  $("win-fact").textContent = FACTS[(cfg.n - 1) % FACTS.length];
+  $("next-btn").classList.toggle("hidden", isFinal);
+  showOnly(["win"]);
+}
+
+function loseLevel() {
+  sfx.lose();
+  state = S.LOSE;
+  $("lose-sub").textContent = "เก็บได้ " + collected + "/" + cfg.quota + " ดอก — อีกนิดเดียว ลองใหม่นะ!";
+  showOnly(["lose"]);
+}
+
+$("next-btn").addEventListener("click", () => startLevel(Math.min(cfg.n + 1, TOTAL)));
+$("replay-btn").addEventListener("click", () => startLevel(cfg.n));
+$("lose-retry").addEventListener("click", () => startLevel(cfg.n));
+$("win-menu-btn").addEventListener("click", openMenu);
+$("lose-menu-btn").addEventListener("click", openMenu);
+
+// ---------- ควบคุม: ลากนิ้ว / เมาส์ / ปุ่มลูกศร ----------
+let dragging = false;
+cvs.addEventListener("pointerdown", e => {
+  if (state === S.PAUSE) { resumeFromPause(); return; }
+  dragging = true; boat.tx = e.clientX;
+});
+cvs.addEventListener("pointermove", e => { if (dragging) boat.tx = e.clientX; });
+window.addEventListener("pointerup", () => dragging = false);
+$("paused").addEventListener("pointerdown", resumeFromPause);
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+function resumeFromPause() {
+  if (state !== S.PAUSE) return;
+  $("paused").classList.add("hidden");
+  state = S.PLAY; last = performance.now();
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && state === S.PLAY) { state = S.PAUSE; $("paused").classList.remove("hidden"); }
+});
+
+// ---------- สุ่มของลอยน้ำ ----------
+function spawnItem() {
+  const r = Math.random();
+  let type;
+  if (r < cfg.golden) type = "golden";
+  else if (r < cfg.golden + cfg.obstacle) {
+    const o = Math.random();
+    if (cfg.fisher && o < 0.22) type = "fisher";
+    else type = o < 0.62 ? "hyacinth" : "log";
+  } else type = "lotus";
+
+  const speed = (H * 0.22) * cfg.speedMul * (0.85 + Math.random() * 0.3);
+  if (type === "fisher") {
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    items.push({ type, dir, x: dir > 0 ? -70 : W + 70, y: -30 + Math.random() * 40,
+      vx: dir * (85 + cfg.n * 1.1), vy: speed * 0.5, r: 46, ph: Math.random() * 7, sway: 0 });
+    return;
+  }
+  const it = { type, x: 30 + Math.random() * (W - 60), y: -40, vx: 0,
+    vy: speed, r: type === "log" ? 34 : 24, ph: Math.random() * 7,
+    sway: type === "log" ? 0 : 14 + Math.random() * 10 };
+  // กติกาด่านตำนาน
+  if (cfg.n === 10 && it.type === "lotus") it.bloom = true;              // บาน-หุบตามจังหวะ
+  if (cfg.n === 20 && it.type === "lotus") it.c = ["p", "w", "g"][Math.floor(Math.random() * 3)];
+  if (cfg.n === 90 && it.type === "lotus") { it.type = "bud"; it.open = false; } // บัวตูม รอฝน
+  items.push(it);
+}
+function isOpen(it, t) { return !it.bloom || Math.sin(t * 1.4 + it.ph * 3) > -0.25; }
+
+function splash(x, y, color, n) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, sp2 = 40 + Math.random() * 120;
+    particles.push({ x, y, vx: Math.cos(a) * sp2, vy: Math.sin(a) * sp2 - 40, life: .6, t: .6, color });
+  }
+}
+function floatText(x, y, txt, color) { floaters.push({ x, y, txt, color, life: .9, t: .9 }); }
+
+function gainProgress(add, x, y, gold) {
+  collected += add;
+  floatText(x, y, "+" + add + " 🌸", gold ? "#ffd23f" : "#ff9dbb");
+  splash(x, y, gold ? "#ffd23f" : "#ff7ba1", 10);
+  gold ? sfx.golden() : sfx.catch();
+  updateHUD();
+  if (collected >= cfg.quota) { winLevel(); return true; }
+  return false;
+}
+function hurt(x, y) {
+  if (invuln > 0) return false;
+  if (progress.sh > 0) { // โล่ทองจาก AR/QR กันชนไว้ 1 ครั้ง
+    progress.sh--; saveProgress();
+    invuln = 1.5; shake = 5;
+    floatText(x, y - 20, "💛 โล่ทองกันไว้!", "#ffd23f");
+    splash(x, y, "#ffd23f", 10);
+    sfx.catch();
+    updateHUD();
+    return false;
+  }
+  hearts--; invuln = 1.5; shake = 10;
+  splash(x, y, "#9be48a", 14);
+  sfx.hit();
+  updateHUD();
+  if (hearts <= 0) { loseLevel(); return true; }
+  return false;
+}
+
+// ---------- อัปเดตเกม ----------
+function update(dt, t) {
+  if (keys.ArrowLeft) boat.tx -= 420 * dt;
+  if (keys.ArrowRight) boat.tx += 420 * dt;
+  boat.tx = Math.max(boat.w / 2, Math.min(W - boat.w / 2, boat.tx));
+  const dx = boat.tx - boat.x;
+  boat.x += dx * Math.min(1, dt * cfg.follow);
+  boat.rock = Math.max(-0.28, Math.min(0.28, dx * 0.004));
+  const boatY = H - 110;
+
+  spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    spawnItem();
+    spawnTimer = cfg.spawnInt * (0.8 + Math.random() * 0.4);
+  }
+  if (invuln > 0) invuln -= dt;
+  if (shake > 0) shake -= dt * 30;
+
+  const wind = cfg.windMax ? Math.sin(t * 0.7 + windSeed) * cfg.windMax : 0;
+
+  // ---- กลไกด่านตำนาน (ก่อนวนของลอย) ----
+  if (cfg.n === 30 && sp.ducks) {
+    for (const d of sp.ducks) {
+      if (d.flee > 0) { d.flee -= dt; if (d.flee <= 0) { floatText(boat.x, boatY + 30, "เป็ดน้อยกลับมา! 🦆", "#ffe08a"); sfx.quack(); updateSpBar(); } continue; }
+      d.x += ((boat.x + (d.i - 1) * 46) - d.x) * Math.min(1, dt * (4 - d.i * 0.8));
+    }
+  }
+  if (cfg.n === 40) {
+    sp.fireT -= dt;
+    if (sp.fireT <= 0) {
+      items.push({ type: "fire", x: 40 + Math.random() * (W - 80), y: H + 30, vx: 0, vy: -(230 + Math.random() * 130), r: 22, ph: Math.random() * 7, sway: 8 });
+      sp.fireT = 1.1 + Math.random() * 0.9;
+    }
+  }
+  if (cfg.n === 50 && sp.wp) {
+    const w = sp.wp;
+    w.x += w.vx * dt; w.y += w.vy * dt;
+    if (w.x < 90 || w.x > W - 90) w.vx *= -1;
+    if (w.y < H * 0.22 || w.y > H * 0.58) w.vy *= -1;
+    const k2 = Math.max(0, 1 - Math.abs(w.y - boatY) / (H * 0.7));
+    boat.x += (w.x - boat.x) * dt * 0.5 * k2; // เรือโดนดูดเบา ๆ
+  }
+  if (cfg.n === 60) {
+    sp.vendT -= dt;
+    if (sp.vendT <= 0) {
+      const dir = Math.random() < 0.5 ? 1 : -1;
+      items.push({ type: "vendor", dir, x: dir > 0 ? -80 : W + 80, y: H * 0.25 + Math.random() * (H * 0.45),
+        vx: dir * (70 + Math.random() * 40), vy: 14, r: 52, ph: Math.random() * 7, sway: 0, cd: 0 });
+      sp.vendT = 4.5 + Math.random() * 3;
+    }
+  }
+  if (cfg.n === 70) {
+    sp.vel = (boat.x - sp.px) / Math.max(dt, 0.001);
+    sp.px = boat.x;
+    if (sp.spillCd > 0) sp.spillCd -= dt;
+    if (Math.abs(sp.vel) > 1400 && collected > 2 && sp.spillCd <= 0) {
+      const nSpill = Math.min(4, Math.ceil(collected * 0.2));
+      collected -= nSpill;
+      sp.spillCd = 0.9;
+      for (let i = 0; i < nSpill; i++) {
+        items.push({ type: "spill", x: boat.x + (Math.random() - .5) * 60, y: boatY - 70,
+          vx: (Math.random() - .5) * 260, vy: -(200 + Math.random() * 120), r: 22, ph: Math.random() * 7, sway: 0 });
+      }
+      floatText(boat.x, boatY - 90, "บัวร่วง! -" + nSpill, "#ff9d9d");
+      sfx.hit();
+      updateHUD();
+    }
+  }
+  if (cfg.n === 90) sp.cloudX += (boat.x - sp.cloudX) * Math.min(1, dt * 1.1);
+  if (cfg.n === 100) {
+    // เส้นทางหัวพญานาค: แกว่งซ้ายขวา + โฉบลงต่ำเป็นจังหวะ
+    const dip = Math.max(0, Math.sin(t * 0.17));
+    const hx = W / 2 + Math.sin(t * 0.42) * W * 0.38;
+    const hy = 150 + Math.sin(t * 0.9) * 40 + dip * dip * (H - 340);
+    sp.hist.unshift({ x: hx, y: hy });
+    if (sp.hist.length > 90) sp.hist.pop();
+    if (sp.mouth > 0) sp.mouth -= dt;
+    sp.spitT -= dt;
+    if (sp.spitT <= 0) {
+      items.push({ type: "golden", x: hx, y: hy + 26, vx: 0, vy: (H * 0.22) * 1.15, r: 24, ph: Math.random() * 7, sway: 12 });
+      sp.mouth = 0.5; sp.spitT = 3.2 + Math.random() * 1.3;
+    }
+    // ชนลำตัวพญานาค?
+    for (let i = 0; i < 14; i++) {
+      const s = sp.hist[Math.min(i * 6, sp.hist.length - 1)];
+      if (s && Math.abs(s.y - boatY) < 34 && Math.abs(s.x - boat.x) < boat.w / 2 + 20) {
+        if (hurt(boat.x, boatY)) return;
+        break;
+      }
+    }
+  }
+
+  // ---- ของลอยน้ำ ----
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if (it.type === "spill") it.vy += 520 * dt;
+    it.y += it.vy * dt;
+    it.x += it.vx * dt;
+    if (wind && it.type !== "fisher" && it.type !== "vendor") it.x = Math.max(24, Math.min(W - 24, it.x + wind * dt));
+    if (cfg.n === 50 && sp.wp) {
+      const ddx = it.x - sp.wp.x, ddy = it.y - sp.wp.y, d = Math.hypot(ddx, ddy) || 1;
+      if (d < sp.wp.R) {
+        const k = 1 - d / sp.wp.R, s = 300 * k * dt;
+        it.x += (-ddy / d) * s;
+        it.y += (ddx / d) * s * 0.55 - it.vy * dt * 0.5 * k; // วนรอบ + ถ่วงให้ค้างในวน
+      }
+    }
+    if (cfg.n === 90 && it.type === "bud" && !it.open &&
+        it.y > 140 && it.y < H * 0.58 && Math.abs(it.x - sp.cloudX) < 78) {
+      it.open = true;
+      splash(it.x, it.y, "#a8e6ff", 8);
+      floatText(it.x, it.y - 20, "บาน! 🌸", "#ffc4d6");
+    }
+    const ix = it.x + Math.sin(it.y / 60 + it.ph) * it.sway * 0.3;
+
+    // เป็ดน้อยช่วยเก็บ / โดนชน (ด่าน 30)
+    if (cfg.n === 30 && sp.ducks) {
+      const duckY = boatY + 44;
+      let handled = false;
+      for (const d of sp.ducks) {
+        if (d.flee > 0) continue;
+        if (Math.abs(it.y - duckY) < 26 && Math.abs(ix - d.x) < 32) {
+          if (it.type === "lotus" || it.type === "golden") {
+            items.splice(i, 1);
+            floatText(d.x, duckY - 26, "🦆+" + (it.type === "golden" ? 3 : 1), "#ffe08a");
+            if (gainProgress(it.type === "golden" ? 3 : 1, d.x, duckY, it.type === "golden")) return;
+          } else {
+            d.flee = 8;
+            splash(d.x, duckY, "#a8d8ff", 10);
+            floatText(d.x, duckY - 26, "เป็ดน้อยตกใจ! 💦", "#a8d8ff");
+            sfx.quack();
+            items.splice(i, 1);
+            updateSpBar();
+          }
+          handled = true;
+          break;
+        }
+      }
+      if (handled) continue;
+    }
+
+    // ชนเรือ?
+    if (Math.abs(it.y - boatY) < 34 && Math.abs(ix - boat.x) < boat.w / 2 + it.r * 0.55) {
+      if (it.type === "lotus" || it.type === "golden" || it.type === "bud" ||
+          it.type === "fire" || (it.type === "spill" && it.vy > 0)) {
+        // บัวหุบ (ด่าน 10) / บัวตูมยังไม่บาน (ด่าน 90) — เก็บไม่ได้ ลอยผ่านไป
+        if ((it.type === "lotus" && !isOpen(it, t)) || (it.type === "bud" && !it.open)) continue;
+        // เก็บตามสีที่ยายสั่ง (ด่าน 20)
+        if (cfg.n === 20 && it.type === "lotus") {
+          if (it.c === sp.order[0]) {
+            sp.order.shift(); sp.order.push(["p", "w", "g"][Math.floor(Math.random() * 3)]);
+            items.splice(i, 1);
+            if (gainProgress(1, ix, boatY - 40, it.c === "g")) return;
+            continue;
+          }
+          items.splice(i, 1);
+          splash(ix, boatY, "#cccccc", 6);
+          if (sp.wrongCd <= 0) { floatText(ix, boatY - 40, "ยายไม่ได้สั่งดอกนี้จ้ะ~", "#dddddd"); sp.wrongCd = 1; }
+          continue;
+        }
+        // เก็บใส่ตะกร้า (ด่าน 60)
+        if (cfg.n === 60 && it.type === "lotus") {
+          items.splice(i, 1);
+          if (sp.basket >= 5) { floatText(ix, boatY - 40, "ตะกร้าเต็ม! ไปส่งเรือแม่ค้า 🛶", "#ffd23f"); continue; }
+          sp.basket++;
+          splash(ix, boatY, "#ff7ba1", 8);
+          sfx.catch();
+          floatText(ix, boatY - 40, "ใส่ตะกร้า " + sp.basket + "/5", "#ff9dbb");
+          updateSpBar();
+          continue;
+        }
+        const add = it.type === "golden" ? 3 : it.type === "fire" ? 2 : 1;
+        items.splice(i, 1);
+        if (it.type === "fire") floatText(ix, boatY - 60, "บั้งไฟ! 🎆", "#ff9dff");
+        if (gainProgress(add, ix, boatY - 40, it.type === "golden" || it.type === "fire")) return;
+        continue;
+      }
+      if (it.type === "vendor") {
+        if (it.cd > 0) { it.cd -= dt; continue; }
+        if (sp.basket > 0) {
+          const d = sp.basket; sp.basket = 0;
+          it.cd = 1;
+          floatText(ix, it.y - 50, "ส่งแล้ว +" + d + " 🧺", "#ffd23f");
+          splash(ix, it.y, "#ffd23f", 12);
+          sfx.deliver();
+          updateSpBar();
+          collected += d;
+          updateHUD();
+          if (collected >= cfg.quota) { winLevel(); return; }
+        }
+        continue;
+      }
+      // ของอันตราย
+      if (invuln <= 0) {
+        if (cfg.n === 70 && collected > 0) { // ชนแล้วหอบัวพังบางส่วน
+          const nSpill = Math.min(3, collected);
+          collected -= nSpill;
+          for (let k = 0; k < nSpill; k++) {
+            items.push({ type: "spill", x: boat.x + (Math.random() - .5) * 60, y: boatY - 70,
+              vx: (Math.random() - .5) * 260, vy: -(200 + Math.random() * 120), r: 22, ph: Math.random() * 7, sway: 0 });
+          }
+        }
+        if (hurt(ix, boatY)) return;
+        if (it.type !== "fisher") items.splice(i, 1);
+      }
+      continue;
+    }
+    // หลุดจอ
+    if (it.y > H + 60 || it.y < -80 || it.x < -120 || it.x > W + 120) items.splice(i, 1);
+  }
+  if (sp.wrongCd > 0) sp.wrongCd -= dt;
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.life -= dt; if (p.life <= 0) { particles.splice(i, 1); continue; }
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt;
+  }
+  for (let i = floaters.length - 1; i >= 0; i--) {
+    const f = floaters[i];
+    f.life -= dt; f.y -= 50 * dt;
+    if (f.life <= 0) floaters.splice(i, 1);
+  }
+  for (const pd of pads) {
+    pd.y += pd.v * dt;
+    if (pd.y > H + 30) { pd.y = -30; pd.x = Math.random() * W; }
+  }
+}
+
+// ---------- วาดฉากและตัวละคร ----------
+function drawWater(t) {
+  const z = cfg.zone;
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, z.w1); g.addColorStop(0.45, z.w2); g.addColorStop(1, z.w3);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = "rgba(" + z.glint + ",.10)";
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 9; i++) {
+    const y = (i / 9) * H + Math.sin(t * 1.3 + i * 2) * 6;
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 24) {
+      const yy = y + Math.sin(x / 46 + t * 2 + i) * 3.5;
+      x === 0 ? ctx.moveTo(x, yy) : ctx.lineTo(x, yy);
+    }
+    ctx.stroke();
+  }
+  for (const pd of pads) {
+    const bob = Math.sin(t * 1.5 + pd.ph) * 2;
+    ctx.fillStyle = "rgba(46,110,80,.5)";
+    ctx.beginPath();
+    ctx.ellipse(pd.x, pd.y + bob, pd.s, pd.s * 0.62, 0.3, 0.25, Math.PI * 2.1);
+    ctx.fill();
+  }
+}
+
+const LOTUS_COLORS = {
+  red:   { a: "#ffb9cd", b: "#e8447a", core: "#ffd23f" },
+  gold:  { a: "#ffe27a", b: "#f0a92e", core: "#fff3b0" },
+  white: { a: "#ffffff", b: "#d8cdf0", core: "#ffd23f" },
+};
+function drawLotus(x, y, s, kind, t, ph) {
+  const col = LOTUS_COLORS[kind] || LOTUS_COLORS.red;
+  const bob = Math.sin(t * 2 + ph) * 2;
+  ctx.save();
+  ctx.translate(x, y + bob);
+  ctx.fillStyle = "rgba(40,105,75,.75)";
+  ctx.beginPath(); ctx.ellipse(0, s * 0.35, s * 1.25, s * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+  const petals = 7;
+  for (let i = 0; i < petals; i++) {
+    const a = (i / petals) * Math.PI * 2 + ph;
+    ctx.save();
+    ctx.rotate(a);
+    const pg = ctx.createLinearGradient(0, -s, 0, 0);
+    pg.addColorStop(0, col.a); pg.addColorStop(1, col.b);
+    ctx.fillStyle = pg;
+    ctx.beginPath(); ctx.ellipse(0, -s * 0.55, s * 0.34, s * 0.62, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+  ctx.fillStyle = col.core;
+  ctx.beginPath(); ctx.arc(0, 0, s * 0.3, 0, Math.PI * 2); ctx.fill();
+  if (kind === "gold") {
+    ctx.strokeStyle = "rgba(255,240,160,.9)"; ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i++) {
+      const a = t * 3 + (i * Math.PI) / 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * s * 1.15, Math.sin(a) * s * 1.15);
+      ctx.lineTo(Math.cos(a) * s * 1.5, Math.sin(a) * s * 1.5);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+// บัวตูม/บัวหุบ (กลีบยังไม่บาน)
+function drawBud(x, y, s, t, ph, watered) {
+  const bob = Math.sin(t * 2 + ph) * 2;
+  ctx.save();
+  ctx.translate(x, y + bob);
+  ctx.fillStyle = "rgba(40,105,75,.75)";
+  ctx.beginPath(); ctx.ellipse(0, s * 0.4, s * 1.1, s * 0.45, 0, 0, Math.PI * 2); ctx.fill();
+  const g = ctx.createLinearGradient(0, -s, 0, s * 0.4);
+  g.addColorStop(0, "#e88aa8"); g.addColorStop(1, "#7fae6f");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 1.05);
+  ctx.quadraticCurveTo(s * 0.72, -s * 0.35, s * 0.34, s * 0.3);
+  ctx.quadraticCurveTo(0, s * 0.5, -s * 0.34, s * 0.3);
+  ctx.quadraticCurveTo(-s * 0.72, -s * 0.35, 0, -s * 1.05);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(120,60,80,.35)"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, -s * 0.95); ctx.quadraticCurveTo(s * 0.1, -s * 0.2, 0, s * 0.35); ctx.stroke();
+  if (watered) { // ประกายรอเก็บ
+    ctx.strokeStyle = "rgba(168,230,255,.8)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, -s * 0.2, s * 1.3, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawHyacinth(x, y, s, t, ph) {
+  const bob = Math.sin(t * 2 + ph) * 2;
+  ctx.save();
+  ctx.translate(x, y + bob);
+  ctx.fillStyle = "#3f8f4f";
+  for (const [ox, oy, r] of [[-s * .6, s * .15, .62], [s * .55, s * .1, .58], [0, .3 * s, .7], [0, -s * .25, .5]]) {
+    ctx.beginPath(); ctx.ellipse(ox, oy, s * r, s * r * .8, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = "#2e6e3c";
+  ctx.beginPath(); ctx.ellipse(-s * .3, s * .1, s * .4, s * .3, .5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#b087e0";
+  ctx.beginPath(); ctx.arc(s * .2, -s * .6, s * .22, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s * .38, -s * .78, s * .16, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+function drawLog(x, y, s, t, ph) {
+  ctx.save();
+  ctx.translate(x, y + Math.sin(t * 1.6 + ph) * 2);
+  ctx.rotate(Math.sin(ph) * 0.5);
+  const g = ctx.createLinearGradient(0, -s * .35, 0, s * .35);
+  g.addColorStop(0, "#8a5a34"); g.addColorStop(1, "#5c3a20");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.roundRect(-s, -s * .32, s * 2, s * .64, s * .3);
+  ctx.fill();
+  ctx.fillStyle = "#c99b6a";
+  ctx.beginPath(); ctx.ellipse(s, 0, s * .13, s * .3, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(60,35,18,.6)"; ctx.lineWidth = 2;
+  for (const ox of [-s * .5, 0, s * .45]) {
+    ctx.beginPath(); ctx.moveTo(ox, -s * .2); ctx.quadraticCurveTo(ox + 8, 0, ox, s * .2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawFisher(x, y, dir, t, ph) {
+  ctx.save();
+  ctx.translate(x, y + Math.sin(t * 1.8 + ph) * 2.5);
+  ctx.scale(dir, 1);
+  ctx.fillStyle = "rgba(10,8,18,.3)";
+  ctx.beginPath(); ctx.ellipse(0, 18, 46, 9, 0, 0, Math.PI * 2); ctx.fill();
+  const hull = ctx.createLinearGradient(0, -4, 0, 16);
+  hull.addColorStop(0, "#7d6248"); hull.addColorStop(1, "#4a3826");
+  ctx.fillStyle = hull;
+  ctx.beginPath();
+  ctx.moveTo(-46, -4);
+  ctx.quadraticCurveTo(-30, 15, 0, 16);
+  ctx.quadraticCurveTo(30, 15, 50, -8);
+  ctx.quadraticCurveTo(0, 4, -46, -4);
+  ctx.fill();
+  ctx.fillStyle = "#6a4f8f";
+  ctx.beginPath(); ctx.roundRect(-14, -20, 15, 17, 5); ctx.fill();
+  ctx.fillStyle = "#f2c9a0";
+  ctx.beginPath(); ctx.arc(-6, -26, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#d9a94e";
+  ctx.beginPath();
+  ctx.moveTo(-18, -28); ctx.lineTo(-6, -40); ctx.lineTo(6, -28);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "#3e2c18"; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(2, -22); ctx.quadraticCurveTo(26, -34, 38, -18); ctx.stroke();
+  ctx.strokeStyle = "rgba(230,240,255,.5)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(38, -18); ctx.lineTo(38, 6); ctx.stroke();
+  ctx.restore();
+}
+
+// เรือแม่ค้าตลาดน้ำ (ด่าน 60) — มีร่มแดง ไม่เป็นอันตราย
+function drawVendor(x, y, dir, t, ph) {
+  ctx.save();
+  ctx.translate(x, y + Math.sin(t * 1.8 + ph) * 2.5);
+  ctx.scale(dir, 1);
+  ctx.fillStyle = "rgba(10,8,18,.3)";
+  ctx.beginPath(); ctx.ellipse(0, 20, 52, 10, 0, 0, Math.PI * 2); ctx.fill();
+  const hull = ctx.createLinearGradient(0, -4, 0, 18);
+  hull.addColorStop(0, "#9a7450"); hull.addColorStop(1, "#5a4028");
+  ctx.fillStyle = hull;
+  ctx.beginPath();
+  ctx.moveTo(-52, -4);
+  ctx.quadraticCurveTo(-34, 17, 0, 18);
+  ctx.quadraticCurveTo(34, 17, 56, -9);
+  ctx.quadraticCurveTo(0, 5, -52, -4);
+  ctx.fill();
+  // แม่ค้า
+  ctx.fillStyle = "#c2497a";
+  ctx.beginPath(); ctx.roundRect(-10, -22, 16, 19, 5); ctx.fill();
+  ctx.fillStyle = "#f2c9a0";
+  ctx.beginPath(); ctx.arc(-2, -28, 7, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#2b1a10";
+  ctx.beginPath(); ctx.arc(-2, -31, 7, Math.PI, Math.PI * 2); ctx.fill();
+  // ร่มแดง
+  ctx.strokeStyle = "#7a4a26"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(16, -18); ctx.lineTo(16, -46); ctx.stroke();
+  ctx.fillStyle = "#e8446a";
+  ctx.beginPath(); ctx.arc(16, -46, 24, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffd23f";
+  ctx.beginPath(); ctx.arc(16, -46, 24, Math.PI * 1.25, Math.PI * 1.55); ctx.lineTo(16, -46); ctx.fill();
+  // ของขาย
+  ctx.font = "16px sans-serif"; ctx.textAlign = "center";
+  ctx.fillText("🍜", -26, -6);
+  ctx.restore();
+}
+
+// เป็ดน้อย (ด่าน 30)
+function drawDuck(x, y, t, i) {
+  ctx.save();
+  ctx.translate(x, y + Math.sin(t * 3 + i * 2) * 3);
+  ctx.fillStyle = "rgba(10,8,18,.25)";
+  ctx.beginPath(); ctx.ellipse(0, 12, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffe08a";
+  ctx.beginPath(); ctx.ellipse(0, 0, 15, 11, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(10, -10, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#f5a25a";
+  ctx.beginPath();
+  ctx.moveTo(16, -10); ctx.lineTo(24, -8); ctx.lineTo(16, -6);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#2b1a10";
+  ctx.beginPath(); ctx.arc(12, -12, 1.6, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#e8b84a"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(-3, 0, 8, -0.6, 1.2); ctx.stroke();
+  ctx.restore();
+}
+
+// บั้งไฟพญานาค (ด่าน 40) — ดวงไฟลอยขึ้นจากน้ำ
+function drawFire(x, y, t, ph) {
+  ctx.save();
+  ctx.translate(x + Math.sin(y / 40 + ph) * 6, y);
+  for (let i = 1; i <= 3; i++) {
+    ctx.fillStyle = "rgba(255,120,200," + (0.16 - i * 0.045) + ")";
+    ctx.beginPath(); ctx.arc(0, i * 16, 10 - i * 2, 0, Math.PI * 2); ctx.fill();
+  }
+  const g = ctx.createRadialGradient(0, 0, 2, 0, 0, 18);
+  g.addColorStop(0, "#fff0fa"); g.addColorStop(0.4, "#ff9dff"); g.addColorStop(1, "rgba(255,60,160,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#ffd0f4";
+  ctx.beginPath(); ctx.arc(0, 0, 6 + Math.sin(t * 9 + ph) * 1.5, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+// น้ำวน (ด่าน 50)
+function drawWhirl(t) {
+  const w = sp.wp;
+  if (!w) return;
+  ctx.save();
+  ctx.translate(w.x, w.y);
+  ctx.rotate(t * 2.2);
+  for (let i = 0; i < 3; i++) {
+    ctx.strokeStyle = "rgba(220,240,255," + (0.3 - i * 0.07) + ")";
+    ctx.lineWidth = 3 - i * 0.7;
+    ctx.beginPath();
+    for (let a = 0; a < Math.PI * 4; a += 0.25) {
+      const r = (a / (Math.PI * 4)) * w.R * (0.85 - i * 0.18);
+      const px = Math.cos(a + i * 2) * r, py = Math.sin(a + i * 2) * r * 0.8;
+      a === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+  ctx.fillStyle = "rgba(12,20,40,.4)";
+  ctx.beginPath(); ctx.ellipse(0, 0, 26, 20, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+
+// เมฆฝนส่วนตัว (ด่าน 90)
+function drawCloud(t) {
+  const x = sp.cloudX, y = 108 + Math.sin(t * 1.6) * 5;
+  ctx.save();
+  // สายฝนใต้เมฆ
+  ctx.strokeStyle = "rgba(168,216,255,.4)"; ctx.lineWidth = 2;
+  for (let i = -2; i <= 2; i++) {
+    const rx = x + i * 22 + Math.sin(t * 6 + i) * 3;
+    ctx.beginPath();
+    ctx.moveTo(rx, y + 26);
+    ctx.lineTo(rx - 6, Math.min(H * 0.56, y + 26 + H * 0.4));
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#dfe8f5";
+  for (const [ox, oy, r] of [[-26, 4, 20], [0, -8, 26], [28, 4, 20], [0, 8, 24]]) {
+    ctx.beginPath(); ctx.arc(x + ox, y + oy, r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.fillStyle = "rgba(90,110,140,.35)";
+  ctx.beginPath(); ctx.ellipse(x, y + 16, 46, 10, 0, 0, Math.PI); ctx.fill();
+  ctx.restore();
+}
+
+// พญานาค (ด่าน 100)
+function drawNaga(t) {
+  if (!sp.hist || !sp.hist.length) return;
+  const seg = i => sp.hist[Math.min(i * 6, sp.hist.length - 1)];
+  for (let i = 13; i >= 1; i--) {
+    const s = seg(i);
+    const r = 24 - i * 1.2;
+    ctx.fillStyle = i % 2 ? "#1f7a5c" : "#26936e";
+    ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "rgba(255,210,63,.5)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(s.x, s.y, r, 0.3, Math.PI - 0.3); ctx.stroke();
+    if (i % 3 === 0) { // ครีบหลัง
+      ctx.fillStyle = "#e8446a";
+      ctx.beginPath();
+      ctx.moveTo(s.x - 8, s.y - r + 2);
+      ctx.lineTo(s.x, s.y - r - 14);
+      ctx.lineTo(s.x + 8, s.y - r + 2);
+      ctx.closePath(); ctx.fill();
+    }
+  }
+  const h = seg(0);
+  ctx.save();
+  ctx.translate(h.x, h.y);
+  ctx.fillStyle = "#26936e";
+  ctx.beginPath(); ctx.arc(0, 0, 27, 0, Math.PI * 2); ctx.fill();
+  // หงอนทอง 3 แฉก
+  ctx.fillStyle = "#ffd23f";
+  for (const [ox, hgt] of [[-14, 18], [0, 26], [14, 18]]) {
+    ctx.beginPath();
+    ctx.moveTo(ox - 6, -20); ctx.lineTo(ox, -20 - hgt); ctx.lineTo(ox + 6, -20);
+    ctx.closePath(); ctx.fill();
+  }
+  // ตา
+  for (const sx of [-10, 10]) {
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.arc(sx, -6, 6, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#c22040";
+    ctx.beginPath(); ctx.arc(sx, -6, 3, 0, Math.PI * 2); ctx.fill();
+  }
+  // ปาก (อ้าตอนคายบัวทอง)
+  if (sp.mouth > 0) {
+    ctx.fillStyle = "#7a1830";
+    ctx.beginPath(); ctx.ellipse(0, 14, 10, 8 + sp.mouth * 8, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "rgba(255,210,63,.5)";
+    ctx.beginPath(); ctx.arc(0, 18, 14 + sp.mouth * 10, 0, Math.PI * 2); ctx.fill();
+  } else {
+    ctx.strokeStyle = "#123c2c"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(0, 10, 9, 0.3, Math.PI - 0.3); ctx.stroke();
+  }
+  // หนวด
+  ctx.strokeStyle = "#ffd23f"; ctx.lineWidth = 2;
+  for (const d of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(d * 16, 8);
+    ctx.quadraticCurveTo(d * 30, 14 + Math.sin(t * 3) * 4, d * 26, 26);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBoat(t) {
+  const y = H - 110;
+  const blink = invuln > 0 && Math.floor(invuln * 8) % 2 === 0;
+  ctx.save();
+  ctx.translate(boat.x, y + Math.sin(t * 2.2) * 2.5);
+  ctx.rotate(boat.rock + Math.sin(t * 1.8) * 0.03);
+  if (blink) ctx.globalAlpha = 0.35;
+
+  ctx.fillStyle = "rgba(15,8,20,.35)";
+  ctx.beginPath(); ctx.ellipse(0, 26, boat.w * .62, 12, 0, 0, Math.PI * 2); ctx.fill();
+
+  const golden = allBadges(); // สะสมตราครบ 4 โรงเรียน = เรือทองคำ
+  const hull = ctx.createLinearGradient(0, -6, 0, 24);
+  if (golden) { hull.addColorStop(0, "#ffd94f"); hull.addColorStop(1, "#b8791a"); }
+  else { hull.addColorStop(0, "#a2603a"); hull.addColorStop(1, "#5f351d"); }
+  ctx.fillStyle = hull;
+  ctx.beginPath();
+  ctx.moveTo(-boat.w / 2 - 10, -4);
+  ctx.quadraticCurveTo(-boat.w / 2 + 4, 22, 0, 24);
+  ctx.quadraticCurveTo(boat.w / 2 - 4, 22, boat.w / 2 + 10, -4);
+  ctx.quadraticCurveTo(0, 8, -boat.w / 2 - 10, -4);
+  ctx.fill();
+  ctx.strokeStyle = golden ? "#8a5a12" : "#3e2210"; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(-boat.w / 2 - 10, -4);
+  ctx.quadraticCurveTo(0, 10, boat.w / 2 + 10, -4);
+  ctx.stroke();
+
+  // หอคอยดอกบัวบนเรือ (ด่าน 70)
+  if (cfg.n === 70 && collected > 0) {
+    const nShow = Math.min(10, collected);
+    for (let i = 0; i < nShow; i++) {
+      const swx = Math.sin(boat.rock * 6 + i * 0.5) * i * 2.2;
+      ctx.fillStyle = i % 2 ? "#e8447a" : "#ff9dbb";
+      ctx.beginPath(); ctx.arc(-20 + swx, -14 - i * 11, 7, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#ffd23f";
+      ctx.beginPath(); ctx.arc(-20 + swx, -14 - i * 11, 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    if (collected > 10) {
+      ctx.font = "800 13px 'Noto Sans Thai',sans-serif"; ctx.textAlign = "center";
+      ctx.fillStyle = "#fff";
+      ctx.fillText("×" + collected, -20, -14 - nShow * 11 - 8);
+    }
+  }
+
+  // เป็ดเหลืองหนองประจักษ์ กัปตันเรือ
+  ctx.fillStyle = "#ffd23f";
+  ctx.beginPath(); ctx.ellipse(-2, -12, 16, 12, 0, 0, Math.PI * 2); ctx.fill(); // ตัวอ้วนกลม
+  ctx.fillStyle = "#ffdf6b";
+  ctx.beginPath(); ctx.ellipse(-14, -16, 7, 9, -0.6, 0, Math.PI * 2); ctx.fill(); // หางจุก
+  ctx.fillStyle = "#ffd23f";
+  ctx.beginPath(); ctx.arc(6, -28, 10, 0, Math.PI * 2); ctx.fill();               // หัว
+  ctx.fillStyle = "#f58a3c";                                                       // ปากแบนส้ม
+  ctx.beginPath(); ctx.ellipse(17, -27, 6.5, 3.6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#2b1a10";                                                       // ตากลม
+  ctx.beginPath(); ctx.arc(9, -31, 2.2, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = 1.2;                  // แววตา
+  ctx.beginPath(); ctx.arc(8.3, -31.7, 0.9, 0, Math.PI * 2); ctx.stroke();
+  if (golden) { // มงกุฎทองเมื่อสะสมตราครบ 4 โรงเรียน
+    ctx.fillStyle = "#ffea70"; ctx.strokeStyle = "#c2861a"; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-1, -37); ctx.lineTo(-1, -45); ctx.lineTo(3.5, -40.5);
+    ctx.lineTo(7, -47); ctx.lineTo(10.5, -40.5); ctx.lineTo(15, -45); ctx.lineTo(15, -37);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  const pa = Math.sin(t * 4) * 0.5;
+  ctx.save();
+  ctx.translate(6, -18); ctx.rotate(0.7 + pa * 0.35);
+  ctx.strokeStyle = "#7a4a26"; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(0, 34); ctx.stroke();
+  ctx.fillStyle = "#8a5a34";
+  ctx.beginPath(); ctx.ellipse(0, 38, 5, 10, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = "#f0b429"; // ปีกจับพาย
+  ctx.save();
+  ctx.translate(4, -15); ctx.rotate(0.45 + pa * 0.2);
+  ctx.beginPath(); ctx.ellipse(0, 0, 8, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  ctx.restore();
+
+  if (Math.abs(boat.tx - boat.x) > 6) {
+    ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(boat.x - boat.w * .55, y + 20);
+    ctx.quadraticCurveTo(boat.x, y + 30, boat.x + boat.w * .55, y + 20);
+    ctx.stroke();
+  }
+}
+
+function drawWeather(t, dt) {
+  const z = cfg.zone;
+  if (cfg.n === 80) { // ลำแสงจันทรา: มืดสนิท เห็นเฉพาะในแสง
+    const beamX = W / 2 + Math.sin(t * 0.35) * W * 0.42;
+    const cl = v => Math.min(1, Math.max(0, v));
+    const g = ctx.createLinearGradient(0, 0, W, 0);
+    g.addColorStop(0, "rgba(5,7,20,.82)");
+    g.addColorStop(cl(beamX / W - 0.2), "rgba(5,7,20,.82)");
+    g.addColorStop(cl(beamX / W), "rgba(5,7,20,.02)");
+    g.addColorStop(cl(beamX / W + 0.2), "rgba(5,7,20,.82)");
+    g.addColorStop(1, "rgba(5,7,20,.82)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // แสงรอบเรือ + ดวงจันทร์ที่ปลายลำแสง
+    const bg = ctx.createRadialGradient(boat.x, H - 110, 10, boat.x, H - 110, 170);
+    bg.addColorStop(0, "rgba(190,210,255,.16)"); bg.addColorStop(1, "rgba(190,210,255,0)");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#f4ecd0";
+    ctx.shadowColor = "rgba(244,236,208,.9)"; ctx.shadowBlur = 36;
+    ctx.beginPath(); ctx.arc(beamX, 64, 25, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    return;
+  }
+  if (z.night) {
+    ctx.fillStyle = "#f4ecd0";
+    ctx.shadowColor = "rgba(244,236,208,.8)"; ctx.shadowBlur = 30;
+    ctx.beginPath(); ctx.arc(W - 64, 88, 24, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowBlur = 0;
+    const g = ctx.createRadialGradient(boat.x, H - 140, 90, boat.x, H - 140, H * 0.85);
+    g.addColorStop(0, "rgba(8,10,25,0)");
+    g.addColorStop(1, "rgba(8,10,25,.6)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
+  if (z.rain && drops.length) {
+    ctx.fillStyle = "rgba(10,12,20,.16)";
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(200,220,255,.34)"; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (const d of drops) {
+      d.y += d.v * dt; d.x -= d.v * dt * 0.12;
+      if (d.y > H) { d.y = -20; d.x = Math.random() * (W + 60); }
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x - d.len * 0.22, d.y - d.len);
+    }
+    ctx.stroke();
+  }
+}
+
+function draw(t, dt) {
+  ctx.save();
+  if (shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+  drawWater(t);
+  if (state !== S.MENU && cfg.n === 50) drawWhirl(t);
+  for (const it of items) {
+    const ix = it.x + Math.sin(it.y / 60 + it.ph) * it.sway * 0.3;
+    if (it.type === "lotus") {
+      if (cfg.n === 10 && !isOpen(it, t)) drawBud(ix, it.y, 16, t, it.ph, false);
+      else drawLotus(ix, it.y, 20, cfg.n === 20 ? (it.c === "g" ? "gold" : it.c === "w" ? "white" : "red") : "red", t, it.ph);
+    }
+    else if (it.type === "golden") drawLotus(ix, it.y, 22, "gold", t, it.ph);
+    else if (it.type === "bud") { it.open ? drawLotus(ix, it.y, 20, "red", t, it.ph) : drawBud(ix, it.y, 16, t, it.ph, false); }
+    else if (it.type === "spill") drawLotus(ix, it.y, 16, "red", t, it.ph);
+    else if (it.type === "fire") drawFire(ix, it.y, t, it.ph);
+    else if (it.type === "hyacinth") drawHyacinth(ix, it.y, 24, t, it.ph);
+    else if (it.type === "fisher") drawFisher(ix, it.y, it.dir, t, it.ph);
+    else if (it.type === "vendor") drawVendor(ix, it.y, it.dir, t, it.ph);
+    else drawLog(ix, it.y, 34, t, it.ph);
+  }
+  if (state !== S.MENU && cfg.n === 100) drawNaga(t);
+  if (state !== S.MENU) {
+    drawBoat(t);
+    if (cfg.n === 30 && sp.ducks) for (const d of sp.ducks) { if (d.flee <= 0) drawDuck(d.x, H - 66, t, d.i); }
+  }
+  for (const p of particles) {
+    ctx.globalAlpha = p.life / p.t;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  for (const f of floaters) {
+    ctx.globalAlpha = f.life / f.t;
+    ctx.font = "800 22px 'Sukhumvit Set','Noto Sans Thai',sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = f.color;
+    ctx.strokeStyle = "rgba(0,0,0,.4)"; ctx.lineWidth = 3;
+    ctx.strokeText(f.txt, f.x, f.y);
+    ctx.fillText(f.txt, f.x, f.y);
+  }
+  ctx.globalAlpha = 1;
+  if (state !== S.MENU) {
+    drawWeather(t, dt);
+    if (cfg.n === 90) drawCloud(t);
+  }
+  ctx.restore();
+}
+
+// ---------- ลูปหลัก ----------
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  const t = now / 1000;
+  if (state === S.PLAY) update(dt, t);
+  else for (const pd of pads) { pd.y += pd.v * dt * 0.4; if (pd.y > H + 30) { pd.y = -30; pd.x = Math.random() * W; } }
+  draw(t, dt);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ============================================================
+//  📷 ล่าสมบัติ AR — เปิดกล้องหลัง หาบัวทองวิเศษรอบตัว (วันละครั้ง)
+//  เก็บครบ 3 ดอก ได้โล่ทอง 💛 ×3 ไว้กันชนในเกม
+// ============================================================
+const arEl = $("ar"), arVideo = $("ar-video"), arCvs = $("ar-cvs");
+const arCtx = arCvs.getContext("2d");
+let arOn = false, arStream = null, arItems = [], arSpark = [], arGot = 0, arOffX = 0, arOffY = 0;
+
+function todayStr() { const d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
+
+async function openAR(force) {
+  if (!force && progress.ar === todayStr()) {
+    toast("วันนี้ล่าสมบัติไปแล้ว 🌙", "พรุ่งนี้กลับมาล่าบัวทองวิเศษได้อีกครั้งนะ");
+    return;
+  }
+  initAudio();
+  arGot = 0; arSpark = []; arOffX = 0; arOffY = 0;
+  arItems = [0, 1, 2].map(() => ({
+    x: 0.14 + Math.random() * 0.72, y: 0.2 + Math.random() * 0.5, // ตำแหน่งเป็นสัดส่วนของจอ
+    ph: Math.random() * 7, got: false,
+  }));
+  $("ar-count").textContent = "🌟 0/3";
+  arEl.classList.remove("hidden", "no-cam");
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  arCvs.width = W * dpr; arCvs.height = H * dpr;
+  arCvs.style.width = W + "px"; arCvs.style.height = H + "px";
+  arCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  arOn = true;
+  // ขอสิทธิ์ gyro (iOS ต้องขอ) — ไม่ให้ก็เล่นได้ ใช้นิ้วลากแทน
+  try {
+    if (window.DeviceOrientationEvent && DeviceOrientationEvent.requestPermission) {
+      await DeviceOrientationEvent.requestPermission();
+    }
+  } catch (e) {}
+  // เปิดกล้องหลัง — เปิดไม่ได้ (ไม่อนุญาต/ไม่มีกล้อง) ใช้ฉากค่ำคืนแทน
+  try {
+    arStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    arVideo.srcObject = arStream;
+  } catch (e) { arEl.classList.add("no-cam"); }
+  requestAnimationFrame(arLoop);
+}
+function closeAR() {
+  arOn = false;
+  if (arStream) { arStream.getTracks().forEach(tr => tr.stop()); arStream = null; }
+  arVideo.srcObject = null;
+  arEl.classList.add("hidden");
+}
+window.addEventListener("deviceorientation", e => {
+  if (!arOn || e.gamma == null) return;
+  arOffX = Math.max(-130, Math.min(130, e.gamma * 4));
+  arOffY = Math.max(-90, Math.min(90, ((e.beta || 45) - 45) * 2.5));
+});
+arEl.addEventListener("pointermove", e => {
+  if (arStream) return; // มีกล้อง+gyro แล้วไม่ต้องใช้นิ้ว
+  arOffX = (e.clientX / W - 0.5) * 70;
+  arOffY = (e.clientY / H - 0.5) * 50;
+});
+function arPos(it) {
+  return {
+    x: it.x * W + arOffX * (0.6 + (it.ph % 1) * 0.8),
+    y: it.y * H + arOffY * 0.7 + Math.sin(performance.now() / 500 + it.ph) * 8,
+  };
+}
+function drawARLotus(x, y, s, t, ph) {
+  arCtx.save();
+  arCtx.translate(x, y);
+  arCtx.rotate(Math.sin(t + ph) * 0.15);
+  for (let i = 0; i < 7; i++) {
+    arCtx.save();
+    arCtx.rotate((i / 7) * Math.PI * 2);
+    const g = arCtx.createLinearGradient(0, -s, 0, 0);
+    g.addColorStop(0, "#ffe27a"); g.addColorStop(1, "#f0a92e");
+    arCtx.fillStyle = g;
+    arCtx.beginPath(); arCtx.ellipse(0, -s * 0.55, s * 0.34, s * 0.62, 0, 0, Math.PI * 2); arCtx.fill();
+    arCtx.restore();
+  }
+  arCtx.fillStyle = "#fff3b0";
+  arCtx.beginPath(); arCtx.arc(0, 0, s * 0.3, 0, Math.PI * 2); arCtx.fill();
+  arCtx.restore();
+}
+function arLoop() {
+  if (!arOn) return;
+  arCtx.clearRect(0, 0, W, H);
+  const t = performance.now() / 1000;
+  for (const it of arItems) {
+    if (it.got) continue;
+    const p = arPos(it);
+    arCtx.strokeStyle = "rgba(255,220,90," + (0.5 + Math.sin(t * 4 + it.ph) * 0.3).toFixed(3) + ")";
+    arCtx.lineWidth = 3;
+    arCtx.beginPath(); arCtx.arc(p.x, p.y, 34 + Math.sin(t * 3 + it.ph) * 4, 0, Math.PI * 2); arCtx.stroke();
+    drawARLotus(p.x, p.y, 24, t, it.ph);
+  }
+  for (let i = arSpark.length - 1; i >= 0; i--) {
+    const s = arSpark[i];
+    s.life -= 0.016;
+    if (s.life <= 0) { arSpark.splice(i, 1); continue; }
+    s.x += s.vx * 0.016; s.y += s.vy * 0.016;
+    arCtx.globalAlpha = s.life / 0.7;
+    arCtx.fillStyle = "#ffd23f";
+    arCtx.beginPath(); arCtx.arc(s.x, s.y, 4, 0, Math.PI * 2); arCtx.fill();
+  }
+  arCtx.globalAlpha = 1;
+  requestAnimationFrame(arLoop);
+}
+arCvs.addEventListener("pointerdown", e => {
+  if (!arOn) return;
+  for (const it of arItems) {
+    if (it.got) continue;
+    const p = arPos(it);
+    if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < 48) {
+      it.got = true; arGot++;
+      sfx.golden();
+      for (let i = 0; i < 14; i++) {
+        const a = Math.random() * Math.PI * 2, v = 60 + Math.random() * 160;
+        arSpark.push({ x: p.x, y: p.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0.7 });
+      }
+      $("ar-count").textContent = "🌟 " + arGot + "/3";
+      if (arGot >= 3) {
+        progress.ar = todayStr();
+        addShield(3);
+        setTimeout(() => {
+          closeAR();
+          gift("🌟", "ล่าสมบัติสำเร็จ!", "ได้โล่ทอง +3 💛 ไว้กันชนในเกม (พกได้สูงสุด " + SHIELD_MAX + " อัน) — พรุ่งนี้มาล่าได้อีกนะ");
+          buildMenu();
+        }, 650);
+      }
+      break;
+    }
+  }
+});
+$("ar-btn").addEventListener("click", () => openAR(false));
+$("ar-close").addEventListener("click", closeAR);
+
+// ============================================================
+//  🔑 โค้ดลับจาก QR — สแกนแล้วเปิดลิงก์ game.html?code=XXXX
+//  หรือกดปุ่มในเมนูแล้วพิมพ์โค้ดเองก็ได้
+// ============================================================
+function gift(icon, title, sub) {
+  const gi = $("gift-icon");
+  gi.innerHTML = "";
+  if (/\.(png|jpe?g|webp)$/i.test(icon)) { // เป็นไฟล์รูป (ตราโรงเรียน)
+    const im = new Image();
+    im.src = icon; im.alt = "";
+    gi.appendChild(im);
+  } else gi.textContent = icon;
+  $("gift-title").textContent = title;
+  $("gift-sub").textContent = sub;
+  $("gift").classList.remove("hidden");
+}
+$("gift-ok").addEventListener("click", () => $("gift").classList.add("hidden"));
+
+function redeemCode(raw) {
+  const code = String(raw || "").trim().toUpperCase();
+  if (!code) return;
+  initAudio();
+  if (BADGES[code]) {
+    if (progress.b.includes(code)) {
+      gift(BADGES[code].img || BADGES[code].icon, "เคยรับตรานี้แล้ว", "ตรา \"" + BADGES[code].name + "\" อยู่ในสมุดสะสมแล้ว ลองหา QR ของโรงเรียนอื่นดูนะ!");
+      return;
+    }
+    progress.b.push(code);
+    addShield(2);
+    sfx.deliver();
+    const got = progress.b.filter(k => BADGES[k]).length;
+    gift(BADGES[code].img || BADGES[code].icon, "ได้ตรา \"" + BADGES[code].name + "\"!",
+      BADGES[code].full + " — ได้โล่ทอง +2 💛" +
+      (allBadges()
+        ? " สะสมครบทั้ง " + BADGE_COUNT + " โรงเรียน อบจ.อุดรธานี! 🏆 ปลดล็อกเรือทองคำ + มงกุฎเป็ดน้อย"
+        : " สะสมตราให้ครบ " + BADGE_COUNT + " โรงเรียนเพื่อปลดล็อกเรือทองคำ! (" + got + "/" + BADGE_COUNT + ")"));
+    buildMenu();
+    return;
+  }
+  if (BONUS[code]) { // โค้ดโบนัสลับ ใช้ได้ครั้งเดียว
+    if (progress.b.includes(code)) { gift(BONUS[code].icon, "เคยรับโค้ดนี้แล้ว", "โค้ดลับใช้ได้ครั้งเดียวเท่านั้นนะ"); return; }
+    progress.b.push(code);
+    addShield(BONUS[code].sh);
+    sfx.deliver();
+    gift(BONUS[code].icon, BONUS[code].title, BONUS[code].sub);
+    buildMenu();
+    return;
+  }
+  gift("❓", "โค้ดไม่ถูกต้อง", "ตรวจดูอีกครั้ง หรือไปสแกน QR ลับที่โปสเตอร์ AR ของโรงเรียนนะ");
+}
+$("code-btn").addEventListener("click", () => {
+  $("code-input").value = "";
+  $("code-modal").classList.remove("hidden");
+});
+$("code-cancel").addEventListener("click", () => $("code-modal").classList.add("hidden"));
+$("code-ok").addEventListener("click", () => {
+  const v = $("code-input").value;
+  $("code-modal").classList.add("hidden");
+  redeemCode(v);
+});
+$("code-input").addEventListener("keydown", e => { if (e.key === "Enter") $("code-ok").click(); });
+
+// มาจากการสแกน QR: game.html?code=XXXX (ล้างโค้ดออกจากลิงก์หลังใช้)
+(function () {
+  const m = (location.search || "").match(/[?&]code=([^&]+)/);
+  if (!m) return;
+  setTimeout(() => redeemCode(decodeURIComponent(m[1])), 400);
+  try {
+    const cleaned = location.search.replace(/([?&])code=[^&]+&?/, "$1").replace(/[?&]$/, "");
+    history.replaceState(null, "", location.pathname + cleaned);
+  } catch (e) {}
+})();
+
+// ---------- โหมดทดสอบ (เปิดด้วย ?bdtest=1 เท่านั้น) ----------
+if (/[?&]bdtest=1/.test(location.search)) {
+  window.__bd = {
+    win: () => { if (state === S.PLAY) { collected = cfg.quota; winLevel(); } },
+    lose: () => { if (state === S.PLAY) { hearts = 0; loseLevel(); } },
+    goto: n => { startLevel(n); sp._test = true; },
+    ar: () => openAR(true),
+    redeem: c => redeemCode(c),
+    info: () => ({ state, level: cfg.n, hearts, collected, quota: cfg.quota, unlocked: progress.u, stars: progress.s,
+      shields: progress.sh, badges: progress.b.slice(), arGot,
+      items: items.map(i => i.type), sp: { basket: sp.basket, order: sp.order && sp.order.slice(0, 3), ducks: sp.ducks && sp.ducks.map(d => d.flee), cloudX: sp.cloudX, wp: !!sp.wp, naga: sp.hist && sp.hist.length } }),
+  };
+}
+
+openMenu();
+</script>
+</body>
+</html>
