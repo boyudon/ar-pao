@@ -181,10 +181,91 @@
   .gift-card h2 { margin: 6px 0 4px; font-size: 21px; }
   .gift-card p { font-size: 14px; line-height: 1.65; margin: 0 0 16px; opacity: .85; }
   #gift-icon { font-size: 52px; }
-  #code-input { width: 100%; font: inherit; font-size: 18px; font-weight: 700; text-align: center;
+  #code-input, #name-input { width: 100%; font: inherit; font-size: 18px; font-weight: 700; text-align: center;
     text-transform: uppercase; border: 2px solid #e8a0bc; border-radius: 12px; padding: 10px;
     margin-bottom: 14px; color: #5a2740; background: #fff; outline: none;
     -webkit-user-select: text; user-select: text; }
+  #name-input { text-transform: none; }
+
+  /* ---------- คะแนน / scoreboard ---------- */
+  #hud-score { font-size: 13px; font-weight: 800; margin-top: 3px; color: #ffe08a; }
+  #total-score { text-align: center; font-size: 15px; font-weight: 800; color: #ffe08a; margin: -4px 0 10px; }
+  .act-row.two .btn.sb { background: linear-gradient(135deg, #ffcf3f, #f0952e); color: #5a2740; }
+  #board { z-index: 36; background: rgba(20,8,16,.82); }
+  .board-card {
+    background: linear-gradient(160deg, #fff6ec, #ffe9ef); color: #5a2740;
+    border-radius: 22px; padding: 20px 20px 18px; max-width: 380px; width: 100%;
+    box-shadow: 0 14px 44px rgba(0,0,0,.5); max-height: 88vh; display: flex; flex-direction: column;
+  }
+  .board-card h2 { margin: 0 0 10px; font-size: 22px; text-align: center; }
+  .score-tiles { display: flex; gap: 10px; margin-bottom: 14px; }
+  .score-tiles .tile {
+    flex: 1; background: rgba(194,73,122,.1); border-radius: 14px; padding: 9px 6px; text-align: center;
+  }
+  .score-tiles .tile b { display: block; font-size: 20px; color: #c2497a; line-height: 1.1; }
+  .score-tiles .tile small { font-size: 10.5px; opacity: .75; font-weight: 700; }
+  .board-list { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .board-row {
+    display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 10px; font-size: 14px;
+  }
+  .board-row:nth-child(odd) { background: rgba(194,73,122,.07); }
+  .board-row .rk { width: 26px; font-weight: 800; text-align: center; font-size: 15px; flex: none; }
+  .board-row.top1 .rk { color: #e6a400; } .board-row.top2 .rk { color: #9a9a9a; } .board-row.top3 .rk { color: #c07a3a; }
+  .board-row .nm { flex: 1; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .board-row .lv { font-size: 10.5px; opacity: .7; flex: none; }
+  .board-row .sc { font-weight: 800; color: #c2497a; flex: none; }
+  .board-row.me { box-shadow: inset 0 0 0 2px #ffcf3f; }
+  .board-empty { text-align: center; font-size: 13.5px; opacity: .7; padding: 22px 6px; }
+  .board-foot { display: flex; gap: 10px; margin-top: 14px; }
+  .board-foot .btn { flex: 1; }
+  #board-reset { background: none; border: none; color: #b06; font-size: 12px; font-weight: 700;
+    text-decoration: underline; cursor: pointer; margin-top: 10px; opacity: .8; }
+  #newrec { z-index: 42; background: rgba(20,8,16,.8); }
+
+  /* ---------- ลงทะเบียน / ของรางวัล / คูปอง ---------- */
+  .act-row.two .btn.pz { background: linear-gradient(135deg, #6fd08a, #34a06a); color: #fff; }
+  #reg-line { text-align: center; font-size: 12.5px; font-weight: 700; margin: 2px 0 12px;
+    color: #ffe08a; cursor: pointer; }
+  #reg-line .edit { opacity: .7; text-decoration: underline; margin-left: 6px; font-weight: 600; }
+  #reg-name, #reg-room, #name-input { text-transform: none; }
+  .mini-note { font-size: 11px; opacity: .7; margin-top: 10px; color: #5a2740; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tabs .tab { flex: 1; font-family: inherit; font-size: 13.5px; font-weight: 800; cursor: pointer;
+    border: none; border-radius: 10px; padding: 8px 0; color: #b06; background: rgba(194,73,122,.12); }
+  .tabs .tab.active { background: #c2497a; color: #fff; }
+  #prize-head { text-align: center; font-size: 13px; font-weight: 700; color: #5a2740; margin-bottom: 12px; }
+  #prize-head b { color: #c2497a; }
+  .prize-row { display: flex; align-items: center; gap: 11px; padding: 10px 9px; border-radius: 12px;
+    font-size: 14px; margin-bottom: 7px; background: rgba(194,73,122,.06); }
+  .prize-row .pic { font-size: 26px; width: 34px; text-align: center; flex: none; }
+  .prize-row .info { flex: 1; min-width: 0; }
+  .prize-row .info b { display: block; font-weight: 800; }
+  .prize-row .info small { font-size: 11px; opacity: .75; }
+  .prize-row .act { flex: none; }
+  .prize-row .act .claim { font-family: inherit; font-size: 12.5px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, #ffcf3f, #f0952e); border: none; border-radius: 999px;
+    padding: 8px 14px; cursor: pointer; }
+  .prize-row .act .tag { font-size: 11px; font-weight: 800; padding: 5px 10px; border-radius: 999px; }
+  .prize-row.locked { opacity: .55; }
+  .prize-row.locked .tag { background: rgba(0,0,0,.1); color: #5a2740; }
+  .prize-row.claimed .tag { background: #34a06a; color: #fff; }
+  .prize-row.claimed .pic, .prize-row.unlocked .pic { filter: none; }
+  .prize-row.locked .pic { filter: grayscale(1); }
+  .prbar { height: 7px; border-radius: 999px; background: rgba(0,0,0,.12); overflow: hidden; margin-top: 5px; }
+  .prbar > i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg,#ff7ba1,#ffd23f); }
+
+  #coupon { z-index: 44; background: rgba(20,8,16,.85); }
+  .coupon-card { background: #fff; color: #5a2740; border-radius: 22px; padding: 0 0 20px;
+    max-width: 320px; width: 100%; overflow: hidden; box-shadow: 0 14px 44px rgba(0,0,0,.5); text-align: center; }
+  .coupon-top { background: linear-gradient(135deg, #c2497a, #7a5cd0); color: #fff; font-weight: 800;
+    font-size: 15px; padding: 12px; letter-spacing: .5px; }
+  #coupon-icon { font-size: 52px; margin-top: 12px; }
+  #coupon .coupon-card h2 { margin: 4px 16px 2px; font-size: 20px; }
+  #coupon-who { font-size: 13px; opacity: .8; margin-bottom: 10px; font-weight: 700; }
+  #coupon-qr { width: 168px; height: 168px; margin: 0 auto; display: block; border-radius: 8px; }
+  #coupon-code { font-size: 20px; font-weight: 800; letter-spacing: 2px; color: #c2497a; margin: 8px 0 0;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .coupon-card .btn { margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -192,7 +273,7 @@
 <canvas id="game"></canvas>
 
 <div id="hud" class="hidden">
-  <div class="box"><div id="hud-level">ด่าน 1</div><div id="hud-zone">รุ่งอรุณริมหนองหาน</div></div>
+  <div class="box"><div id="hud-level">ด่าน 1</div><div id="hud-zone">รุ่งอรุณริมหนองหาน</div><div id="hud-score">🏆 0</div></div>
   <div class="box"><div id="hearts">❤️❤️❤️</div><div id="hud-goal">🌸 0/8</div></div>
 </div>
 <div id="prog" class="hidden"><div id="prog-fill"></div></div>
@@ -205,10 +286,16 @@
     <div class="org">องค์การบริหารส่วนจังหวัดอุดรธานี</div>
     <h1>🛶 พายเรือเก็บบัวแดง</h1>
     <div id="total-stars">⭐ 0/300</div>
+    <div id="total-score">🏆 คะแนนสะสม 0</div>
     <div class="how">ลากนิ้วซ้าย–ขวาบังคับเรือเป็ดน้อย • 🌸 บัวแดง +1 • ⭐ บัวทอง +3<br />หลบ 🌿 ผักตบชวา 🪵 ท่อนไม้ ⛵ เรือประมง — ชนแล้วเสียหัวใจ!<br />ด่านลงท้ายด้วย 0 = <b>ด่านตำนาน ✨</b> กติกาพิเศษไม่เหมือนใคร<br />💛 โล่ทองกันชนได้ 1 ครั้ง — หาจาก 📷 ล่าสมบัติ AR และ 🔑 โค้ดลับ QR</div>
     <div class="act-row">
       <button id="ar-btn" class="btn ar">📷 ล่าสมบัติ AR</button>
       <button id="code-btn" class="btn qr">🔑 โค้ดลับ QR</button>
+    </div>
+    <div id="reg-line"></div>
+    <div class="act-row two">
+      <button id="board-btn" class="btn sb">🏆 ตารางแชมป์</button>
+      <button id="prize-btn" class="btn pz">🎁 ของรางวัล</button>
     </div>
     <div id="badges"></div>
     <div id="level-grid"></div>
@@ -276,6 +363,79 @@
   </div>
 </div>
 
+<!-- ตารางแชมป์ -->
+<div id="board" class="overlay hidden">
+  <div class="board-card">
+    <h2>🏆 ตารางแชมป์</h2>
+    <div class="score-tiles">
+      <div class="tile"><b id="bd-total">0</b><small>คะแนนสะสมรวม</small></div>
+      <div class="tile"><b id="bd-best">0</b><small>สถิติสูงสุด/รอบ</small></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="local">📱 ในเครื่อง</button>
+      <button class="tab" data-tab="online">🌐 ออนไลน์</button>
+    </div>
+    <div class="board-list" id="bd-list"></div>
+    <div class="board-foot"><button id="board-close" class="btn">ปิด</button></div>
+    <button id="board-reset">ล้างตารางแชมป์ในเครื่อง</button>
+  </div>
+</div>
+
+<!-- ทำสถิติใหม่: ใส่ชื่อ -->
+<div id="newrec" class="overlay hidden">
+  <div class="gift-card">
+    <div style="font-size:44px">🎉</div>
+    <h2>ทำสถิติใหม่!</h2>
+    <p id="newrec-sub">คะแนนของเธอติดตารางแชมป์ ใส่ชื่อไว้อวดเพื่อน ๆ เลย!</p>
+    <input id="name-input" placeholder="ชื่อเล่นของเธอ..." autocomplete="off" maxlength="12" />
+    <div class="btn-row">
+      <button id="name-ok" class="btn">บันทึกชื่อ 🏆</button>
+    </div>
+  </div>
+</div>
+
+<!-- ลงทะเบียน ชื่อ + ห้อง -->
+<div id="reg-modal" class="overlay hidden">
+  <div class="gift-card">
+    <div style="font-size:44px">🛶</div>
+    <h2>ลงทะเบียนนักพายเรือ</h2>
+    <p>ใส่ชื่อเล่นและห้อง เพื่อสะสมคะแนนและแลกของรางวัลที่บูธ</p>
+    <input id="reg-name" placeholder="ชื่อเล่น เช่น น้องบัว" autocomplete="off" maxlength="16" />
+    <input id="reg-room" placeholder="ห้อง เช่น ม.1/2 (ไม่ใส่ก็ได้)" autocomplete="off" maxlength="16" />
+    <div class="btn-row">
+      <button id="reg-ok" class="btn">บันทึก ✓</button>
+      <button id="reg-cancel" class="btn ghost" style="color:#5a2740">ปิด</button>
+    </div>
+    <div class="mini-note">ใช้ชื่อเล่นพอ ไม่ต้องใส่ชื่อ-นามสกุลจริง 🙂</div>
+  </div>
+</div>
+
+<!-- ของรางวัล -->
+<div id="prize" class="overlay hidden">
+  <div class="board-card">
+    <h2>🎁 ของรางวัล</h2>
+    <div id="prize-head"></div>
+    <div class="board-list" id="prize-list"></div>
+    <div class="board-foot"><button id="prize-close" class="btn">ปิด</button></div>
+  </div>
+</div>
+
+<!-- คูปองแลกของรางวัล -->
+<div id="coupon" class="overlay hidden">
+  <div class="coupon-card">
+    <div class="coupon-top">🎫 คูปองของรางวัล</div>
+    <div id="coupon-icon">🎁</div>
+    <h2 id="coupon-name"></h2>
+    <div id="coupon-who"></div>
+    <canvas id="coupon-qr"></canvas>
+    <div id="coupon-code"></div>
+    <div class="mini-note">ยื่นหน้าจอนี้ให้คุณครูที่บูธเพื่อรับของรางวัล</div>
+    <button id="coupon-close" class="btn">เก็บคูปอง</button>
+  </div>
+</div>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/qrcode-gen.js"></script>
 <script>
 "use strict";
 // ============================================================
@@ -396,19 +556,112 @@ const BONUS = {
 };
 const SHIELD_MAX = 5;
 
+// ============================================================
+//  🎁 ของรางวัล — ปลดล็อกเมื่อ "คะแนนสะสมรวม" ถึงเกณฑ์ (คะแนนไม่ลด)
+//  แก้ชื่อรางวัล/เกณฑ์ได้ตรงนี้เลย  at = คะแนนที่ต้องถึง
+// ============================================================
+const PRIZES = [
+  { at: 500,   icon: "🌸", name: "สติกเกอร์บัวแดง" },
+  { at: 1500,  icon: "🦆", name: "พวงกุญแจเป็ดน้อย" },
+  { at: 3000,  icon: "📓", name: "สมุดโน้ตหนองหาน" },
+  { at: 6000,  icon: "🥤", name: "กระบอกน้ำที่ระลึก" },
+  { at: 10000, icon: "👕", name: "เสื้อยืดทะเลบัวแดง" },
+  { at: 20000, icon: "🏆", name: "ของรางวัลใหญ่ประจำงาน" },
+];
+
+// ============================================================
+//  ☁️ Firebase — เก็บรายชื่อ+คะแนนรวมศูนย์ (ให้ครูเห็นสด)
+//  ตั้งค่าที่ไฟล์เดียว: js/firebase-config.js (ดูคู่มือใน SETUP-firebase.md)
+//  ⚠️ ถ้ายังไม่ตั้งค่า เกมจะทำงานออฟไลน์ปกติ (คะแนน/รางวัลเก็บในเครื่อง)
+// ============================================================
+const FIREBASE_CONFIG = (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.projectId) ? window.FIREBASE_CONFIG : {};
+
 // ---------- ความคืบหน้า (บันทึกในเครื่อง) ----------
-// sh = โล่ทอง, b = ตราโรงเรียน + โค้ดลับที่รับแล้ว, ar = วันที่ล่าสมบัติล่าสุด
-let progress = { u: 1, s: {}, sh: 0, b: [], ar: "" };
+// sh = โล่ทอง, b = ตรา+โค้ดลับ, ar = วันที่ล่าสมบัติ, hi = คะแนนสะสมรวม, ls = ดีสุด/ด่าน
+// top = ตารางแชมป์ในเครื่อง, nm = ชื่อเล่น, rm = ห้อง, pid = รหัสเครื่อง, cl = รางวัลที่รับแล้ว
+let progress = { u: 1, s: {}, sh: 0, b: [], ar: "", hi: 0, ls: {}, top: [], nm: "", rm: "", pid: "", cl: {} };
 try {
   const raw = JSON.parse(localStorage.getItem("buaDaeng100") || "{}");
   if (raw && typeof raw.u === "number") progress = {
     u: Math.min(Math.max(raw.u, 1), TOTAL), s: raw.s || {},
-    sh: raw.sh || 0, b: raw.b || [], ar: raw.ar || "" };
+    sh: raw.sh || 0, b: raw.b || [], ar: raw.ar || "",
+    hi: raw.hi || 0, ls: raw.ls || {}, top: Array.isArray(raw.top) ? raw.top : [], nm: raw.nm || "",
+    rm: raw.rm || "", pid: raw.pid || "", cl: raw.cl || {} };
 } catch (e) {}
+if (!progress.pid) progress.pid = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+// กันข้อมูลเพี้ยน: ตารางแชมป์ต้องเรียงมาก→น้อย และไม่เกิน 10 เสมอ (qualifiesTop พึ่งพาการเรียงนี้)
+progress.top = (progress.top || []).filter(e => e && typeof e.s === "number").sort((a, b) => b.s - a.s).slice(0, 10);
 function allBadges() { return Object.keys(BADGES).every(k => progress.b.includes(k)); }
 function addShield(n) { progress.sh = Math.min(SHIELD_MAX, progress.sh + n); saveProgress(); }
 function saveProgress() { try { localStorage.setItem("buaDaeng100", JSON.stringify(progress)); } catch (e) {} }
 function totalStars() { return Object.values(progress.s).reduce((a, b) => a + b, 0); }
+function isRegistered() { return !!(progress.nm && progress.nm.trim()); }
+
+// ---------- ☁️ Cloud (Firebase Firestore) — โหลด SDK แบบ dynamic, ล้มเหลวก็เล่นออฟไลน์ได้ ----------
+const cloudEnabled = !!(FIREBASE_CONFIG && FIREBASE_CONFIG.projectId);
+let db = null, cloudReady = false, cloudErr = "";
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement("script"); s.src = src; s.async = true;
+    s.onload = res; s.onerror = () => rej(new Error("load " + src)); document.head.appendChild(s);
+  });
+}
+async function initCloud() {
+  if (!cloudEnabled || cloudReady) return cloudReady;
+  try {
+    const base = "https://www.gstatic.com/firebasejs/10.12.2/";
+    await loadScript(base + "firebase-app-compat.js");
+    await loadScript(base + "firebase-firestore-compat.js");
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    cloudReady = true;
+  } catch (e) { cloudErr = "เชื่อมต่อคลาวด์ไม่ได้ (เล่นออฟไลน์ได้ปกติ)"; cloudReady = false; }
+  return cloudReady;
+}
+// ส่งชื่อ+คะแนนสะสมของเครื่องนี้ขึ้นคลาวด์ (1 เครื่อง = 1 แถว, อัปเดตทับ)
+async function cloudSubmitPlayer() {
+  if (!cloudReady || !isRegistered()) return;
+  try {
+    await db.collection("players").doc(progress.pid).set({
+      name: progress.nm || "", room: progress.rm || "",
+      hi: progress.hi || 0, best: (progress.top[0] && progress.top[0].s) || 0,
+      stars: totalStars(), badges: (progress.b || []).length, ts: Date.now(),
+    }, { merge: true });
+  } catch (e) {}
+}
+// ส่งรายการแลกรางวัลขึ้นคลาวด์ (ครูเห็นว่าใครปลดล็อกอะไร)
+async function cloudSubmitClaim(tier, code) {
+  if (!cloudReady) return;
+  const p = PRIZES.find(x => x.at === tier);
+  try {
+    await db.collection("claims").doc(code).set({
+      code, pid: progress.pid, name: progress.nm || "", room: progress.rm || "",
+      tier, prize: p ? p.name : "", icon: p ? p.icon : "🎁",
+      hi: progress.hi || 0, given: false, ts: Date.now(),
+    }, { merge: true });
+  } catch (e) {}
+}
+async function cloudTop(n) {
+  if (!cloudReady) return null;
+  try {
+    const snap = await db.collection("players").orderBy("hi", "desc").limit(n || 20).get();
+    return snap.docs.map(d => d.data());
+  } catch (e) { return null; }
+}
+
+// ---------- 🎁 ของรางวัล (ปลดล็อกตามคะแนนสะสม progress.hi) ----------
+function prizeState(p) {
+  if (progress.cl && progress.cl[p.at]) return "claimed";
+  return (progress.hi || 0) >= p.at ? "unlocked" : "locked";
+}
+function unclaimedCount() { return PRIZES.filter(p => prizeState(p) === "unlocked").length; }
+// โค้ดคูปองคงที่ต่อ (เครื่อง+รางวัล) กันแลกซ้ำ — สั้น อ่านง่าย
+function couponCode(tier) {
+  let h = 5381;
+  const s = progress.pid + "|" + tier;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return "BD" + tier + "-" + h.toString(36).toUpperCase().slice(0, 4);
+}
 
 // ---------- สถานะเกม ----------
 const S = { MENU: 0, PLAY: 1, WIN: 2, LOSE: 3, PAUSE: 4 };
@@ -416,6 +669,26 @@ let state = S.MENU;
 let cfg = levelConfig(1);
 let hearts = 3, collected = 0, spawnTimer = 0, invuln = 0, shake = 0, windSeed = 0;
 let sp = {}; // ข้อมูลเฉพาะด่านตำนาน
+let runScore = 0, combo = 0, comboBest = 0, lastRun = 0; // คะแนนรอบนี้ + คอมโบ
+
+const fmt = n => (n | 0).toLocaleString("en-US");
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function comboMult() { return 1 + Math.min(4, Math.floor(combo / 5)); } // 1x → 5x
+// ให้คะแนน 1 ครั้ง (เก็บบัว/ส่งของ) — คูณคอมโบ, โชว์ป๊อปอัปเมื่อคอมโบขึ้นชั้น
+function scoreGain(base, x, y) {
+  combo++;
+  if (combo > comboBest) comboBest = combo;
+  const m = comboMult();
+  const pts = base * 10 * m;
+  runScore += pts;
+  if (combo >= 5 && combo % 5 === 0) floatText(W / 2, H * 0.32, "🔥 คอมโบ ×" + m + "!", "#ffd23f");
+  if ($("hud-score")) $("hud-score").textContent = "🏆 " + fmt(runScore);
+  return pts;
+}
+function breakCombo() { // ชนของ → คอมโบหลุด
+  if (combo >= 5) floatText(boat.x, H - 150, "คอมโบหลุด!", "#ff9d9d");
+  combo = 0;
+}
 
 const boat = { x: 0, tx: 0, w: 88, rock: 0 };
 let items = [], particles = [], floaters = [], pads = [], drops = [];
@@ -469,6 +742,7 @@ function updateHUD() {
   $("hud-zone").textContent = cfg.legend ? cfg.legend.icon + " " + cfg.legend.name : cfg.zone.name;
   $("hearts").textContent = "💛".repeat(progress.sh) + "❤️".repeat(hearts) + "🖤".repeat(Math.max(0, 3 - hearts));
   $("hud-goal").textContent = (cfg.n === 60 ? "🧺➜🛶 " : "🌸 ") + collected + "/" + cfg.quota;
+  $("hud-score").textContent = "🏆 " + fmt(runScore) + (combo >= 5 ? "  ×" + comboMult() : "");
   $("prog-fill").style.width = Math.min(100, (collected / cfg.quota) * 100) + "%";
   updateSpBar();
 }
@@ -509,6 +783,12 @@ function starStr(n) {
 }
 function buildMenu() {
   $("total-stars").textContent = "⭐ " + totalStars() + "/" + TOTAL * 3 + (progress.sh ? "  •  💛×" + progress.sh : "");
+  $("total-score").textContent = "🏆 คะแนนสะสม " + fmt(progress.hi || 0);
+  $("reg-line").innerHTML = isRegistered()
+    ? "🛶 " + esc(progress.nm) + (progress.rm ? " · " + esc(progress.rm) : "") + "<span class='edit'>แก้ไข</span>"
+    : "👤 แตะเพื่อลงทะเบียนชื่อ (สะสมคะแนน + แลกของรางวัล)";
+  const uc = unclaimedCount();
+  $("prize-btn").textContent = "🎁 ของรางวัล" + (uc ? " (" + uc + ")" : "");
   const bd = $("badges");
   bd.innerHTML = "";
   for (const k in BADGES) {
@@ -568,10 +848,200 @@ function buildMenu() {
 function openMenu() { state = S.MENU; buildMenu(); showOnly(["menu"]); }
 $("cont-btn").addEventListener("click", () => { initAudio(); startLevel(Math.min(progress.u, TOTAL)); });
 
+// ---------- ตารางแชมป์ (scoreboard) ----------
+let boardTab = "local";
+function addLocalTop(name, score, lv, me) {
+  clearMeFlags();
+  const top = progress.top || [];
+  top.push({ n: name || "ผู้เล่น", s: score, lv, me: !!me });
+  top.sort((a, b) => b.s - a.s);
+  progress.top = top.slice(0, 10);
+}
+function renderBoard() {
+  const top = progress.top || [];
+  $("bd-total").textContent = fmt(progress.hi || 0);
+  $("bd-best").textContent = fmt(top.length ? top[0].s : 0);
+  const list = $("bd-list");
+  const medal = ["🥇", "🥈", "🥉"];
+  if (boardTab === "local") {
+    list.innerHTML = "";
+    if (!top.length) { list.innerHTML = "<div class='board-empty'>ยังไม่มีสถิติ — เล่นให้ได้คะแนนเยอะ ๆ แล้วมาติดตารางกัน! 🛶</div>"; return; }
+    top.forEach((e, i) => {
+      const row = document.createElement("div");
+      row.className = "board-row" + (i < 3 ? " top" + (i + 1) : "") + (e.me ? " me" : "");
+      row.innerHTML = "<span class='rk'>" + (i < 3 ? medal[i] : (i + 1)) + "</span><span class='nm'></span>" +
+        "<span class='lv'>ด่าน " + e.lv + "</span><span class='sc'>" + fmt(e.s) + "</span>";
+      row.querySelector(".nm").textContent = e.n || "ผู้เล่น";
+      list.appendChild(row);
+    });
+    return;
+  }
+  // แท็บออนไลน์
+  if (!cloudEnabled) { list.innerHTML = "<div class='board-empty'>ยังไม่ได้เปิดระบบออนไลน์<br />(คุณครูตั้งค่า Firebase ก่อน — ดู SETUP-firebase.md)</div>"; return; }
+  list.innerHTML = "<div class='board-empty'>⏳ กำลังโหลดอันดับออนไลน์...</div>";
+  initCloud().then(ok => {
+    if (boardTab !== "online" || $("board").classList.contains("hidden")) return;
+    if (!ok) { list.innerHTML = "<div class='board-empty'>" + (cloudErr || "เชื่อมต่อออนไลน์ไม่ได้") + "</div>"; return; }
+    cloudTop(20).then(rows => {
+      if (boardTab !== "online") return;
+      if (!rows || !rows.length) { list.innerHTML = "<div class='board-empty'>ยังไม่มีใครส่งคะแนน — เป็นคนแรกเลย! 🛶</div>"; return; }
+      list.innerHTML = "";
+      rows.forEach((e, i) => {
+        const mine = e.pid === progress.pid || (e.name === progress.nm && e.room === progress.rm && isRegistered());
+        const row = document.createElement("div");
+        row.className = "board-row" + (i < 3 ? " top" + (i + 1) : "") + (mine ? " me" : "");
+        row.innerHTML = "<span class='rk'>" + (i < 3 ? medal[i] : (i + 1)) + "</span><span class='nm'></span>" +
+          "<span class='lv'></span><span class='sc'>" + fmt(e.hi || 0) + "</span>";
+        row.querySelector(".nm").textContent = e.name || "ผู้เล่น";
+        row.querySelector(".lv").textContent = e.room || "";
+        list.appendChild(row);
+      });
+    });
+  });
+}
+function openBoard() { renderBoard(); $("board").classList.remove("hidden"); }
+$("board-btn").addEventListener("click", openBoard);
+$("board-close").addEventListener("click", () => { $("board").classList.add("hidden"); clearMeFlags(); });
+document.querySelectorAll("#board .tab").forEach(t => t.addEventListener("click", () => {
+  boardTab = t.dataset.tab;
+  document.querySelectorAll("#board .tab").forEach(x => x.classList.toggle("active", x === t));
+  renderBoard();
+}));
+$("board-reset").addEventListener("click", () => {
+  if (confirm("ล้างตารางแชมป์ในเครื่องและคะแนนสะสม? (ดาว/ด่าน/ตรา/รางวัลที่รับแล้วไม่หาย)")) {
+    progress.top = []; progress.hi = 0; progress.ls = {};
+    saveProgress(); renderBoard(); buildMenu();
+  }
+});
+function clearMeFlags() { (progress.top || []).forEach(e => delete e.me); }
+
+// ---------- ลงทะเบียน ชื่อ + ห้อง ----------
+let regThen = null; // ทำอะไรต่อหลังลงทะเบียนเสร็จ
+function openRegister(then) {
+  regThen = then || null;
+  $("reg-name").value = progress.nm || "";
+  $("reg-room").value = progress.rm || "";
+  $("reg-modal").classList.remove("hidden");
+  $("reg-name").focus();
+}
+function saveRegister() {
+  const nm = ($("reg-name").value || "").trim().slice(0, 16);
+  if (!nm) { $("reg-name").focus(); return; }
+  progress.nm = nm;
+  progress.rm = ($("reg-room").value || "").trim().slice(0, 16);
+  saveProgress();
+  $("reg-modal").classList.add("hidden");
+  buildMenu();
+  cloudSubmitPlayer();
+  const then = regThen; regThen = null;
+  if (then) then();
+}
+$("reg-line").addEventListener("click", () => openRegister());
+$("reg-ok").addEventListener("click", saveRegister);
+$("reg-cancel").addEventListener("click", () => { $("reg-modal").classList.add("hidden"); regThen = null; });
+$("reg-name").addEventListener("keydown", e => { if (e.key === "Enter") $("reg-room").focus(); });
+$("reg-room").addEventListener("keydown", e => { if (e.key === "Enter") saveRegister(); });
+
+// ---------- ทำสถิติใหม่ (ใส่ชื่อเฉพาะคนที่ยังไม่ลงทะเบียน) ----------
+function maybeNewRecord() {
+  if (!qualifiesTop(lastRun) || isRegistered()) return; // ลงทะเบียนแล้ว = เพิ่มให้อัตโนมัติแล้ว
+  const forRun = lastRun;
+  setTimeout(() => {
+    if ((state !== S.WIN && state !== S.LOSE) || lastRun !== forRun) return;
+    $("newrec-sub").textContent = "🏆 " + fmt(lastRun) + " คะแนน ติดตารางแชมป์! ใส่ชื่อไว้อวดเพื่อน ๆ เลย";
+    $("name-input").value = progress.nm || "";
+    $("newrec").classList.remove("hidden");
+    $("name-input").focus();
+  }, 700);
+}
+function saveRecord() {
+  const nm = ($("name-input").value || "").trim().slice(0, 16) || "ผู้เล่น";
+  progress.nm = nm;
+  addLocalTop(nm, lastRun, cfg.n, true);
+  saveProgress();
+  $("newrec").classList.add("hidden");
+  buildMenu();
+  cloudSubmitPlayer();
+  openBoard();
+}
+$("name-ok").addEventListener("click", saveRecord);
+$("name-input").addEventListener("keydown", e => { if (e.key === "Enter") saveRecord(); });
+
+// ---------- 🎁 ของรางวัล ----------
+function drawQRTo(canvas, text, px) {
+  if (typeof qrcode === "undefined") return;
+  const qr = qrcode(0, "M"); qr.addData(text); qr.make();
+  const n = qr.getModuleCount(), quiet = 2, total = n + quiet * 2;
+  const cell = Math.max(1, Math.floor(px / total)), size = cell * total;
+  canvas.width = size; canvas.height = size;
+  const c = canvas.getContext("2d");
+  c.fillStyle = "#fff"; c.fillRect(0, 0, size, size);
+  c.fillStyle = "#000";
+  for (let r = 0; r < n; r++) for (let col = 0; col < n; col++)
+    if (qr.isDark(r, col)) c.fillRect((col + quiet) * cell, (r + quiet) * cell, cell, cell);
+}
+function renderPrizes() {
+  const hi = progress.hi || 0;
+  const uc = unclaimedCount();
+  $("prize-head").innerHTML = "คะแนนสะสมของเธอ <b>" + fmt(hi) + "</b>" +
+    (uc ? " • มีรางวัลรอรับ " + uc + " ชิ้น!" : "") +
+    (isRegistered() ? "" : "<br />⚠️ ยังไม่ได้ลงทะเบียนชื่อ — กดรับรางวัลแล้วค่อยใส่ก็ได้");
+  const list = $("prize-list");
+  list.innerHTML = "";
+  PRIZES.forEach(p => {
+    const st = prizeState(p);
+    const row = document.createElement("div");
+    row.className = "prize-row " + st;
+    let act;
+    if (st === "claimed") act = "<span class='tag'>✓ รับแล้ว</span>";
+    else if (st === "unlocked") act = "<button class='claim'>รับรางวัล</button>";
+    else {
+      const pct = Math.min(100, Math.floor(hi / p.at * 100));
+      act = "<span class='tag'>ขาด " + fmt(p.at - hi) + "</span>";
+      row._pct = pct;
+    }
+    row.innerHTML = "<span class='pic'>" + p.icon + "</span><span class='info'><b></b><small>ถึง " +
+      fmt(p.at) + " คะแนน</small>" + (st === "locked" ? "<div class='prbar'><i style='width:" + row._pct + "%'></i></div>" : "") +
+      "</span><span class='act'>" + act + "</span>";
+    row.querySelector(".info b").textContent = p.name;
+    if (st === "unlocked") row.querySelector(".claim").addEventListener("click", () => claimPrize(p));
+    if (st === "claimed") { row.style.cursor = "pointer"; row.addEventListener("click", () => showCoupon(p)); }
+    list.appendChild(row);
+  });
+}
+function openPrize() { renderPrizes(); $("prize").classList.remove("hidden"); }
+function claimPrize(p) {
+  if (!isRegistered()) { openRegister(() => { $("prize").classList.remove("hidden"); claimPrize(p); }); $("prize").classList.add("hidden"); return; }
+  if (!progress.cl[p.at]) {
+    const code = couponCode(p.at);
+    progress.cl[p.at] = { code, ts: Date.now() };
+    saveProgress();
+    cloudSubmitClaim(p.at, code);
+    buildMenu();
+  }
+  renderPrizes();
+  showCoupon(p);
+}
+function showCoupon(p) {
+  const rec = progress.cl[p.at]; if (!rec) return;
+  $("coupon-icon").textContent = p.icon;
+  $("coupon-name").textContent = p.name;
+  $("coupon-who").textContent = "🛶 " + (progress.nm || "ผู้เล่น") + (progress.rm ? " · " + progress.rm : "");
+  $("coupon-code").textContent = rec.code;
+  let url = rec.code;
+  try { url = new URL("teacher.html?claim=" + encodeURIComponent(rec.code), location.href).href; } catch (e) {}
+  drawQRTo($("coupon-qr"), url, 336);
+  $("coupon").classList.remove("hidden");
+}
+$("prize-btn").addEventListener("click", () => { initAudio(); openPrize(); });
+$("prize-close").addEventListener("click", () => $("prize").classList.add("hidden"));
+$("coupon-close").addEventListener("click", () => $("coupon").classList.add("hidden"));
+
 // ---------- เริ่ม / จบด่าน ----------
 function startLevel(n) {
   cfg = levelConfig(n);
   hearts = 3; collected = 0; spawnTimer = 0.4; invuln = 0; shake = 0;
+  runScore = 0; combo = 0; comboBest = 0;
   windSeed = n * 7.3;
   items = []; particles = []; floaters = [];
   boat.x = boat.tx = W / 2;
@@ -595,9 +1065,42 @@ function startLevel(n) {
   state = S.PLAY; last = performance.now();
 }
 
+let pendingPrizes = []; // รางวัลที่เพิ่งปลดล็อกในรอบนี้ (โชว์ที่หน้าจบด่าน)
+// ปิดยอดคะแนนรอบนี้: โบนัสจบด่าน (เฉพาะตอนชนะ) + บันทึกคะแนนสะสม/สถิติ + ปลดล็อกรางวัล
+function finalizeRun(win) {
+  if (win) {
+    const bonus = 300 + hearts * 150 + comboBest * 20 + (cfg.legend ? 400 : 0);
+    runScore += bonus;
+  }
+  lastRun = runScore;
+  pendingPrizes = [];
+  if (!sp._test) {
+    const oldHi = progress.hi || 0;
+    progress.hi = oldHi + runScore;
+    if (win && runScore > (progress.ls[cfg.n] || 0)) progress.ls[cfg.n] = runScore;
+    pendingPrizes = PRIZES.filter(p => p.at > oldHi && p.at <= progress.hi); // ข้ามเกณฑ์ในรอบนี้
+    // ติดตารางแชมป์ในเครื่องอัตโนมัติถ้าลงทะเบียนแล้ว
+    if (isRegistered() && qualifiesTop(runScore)) addLocalTop(progress.nm, runScore, cfg.n, true);
+    saveProgress();
+    cloudSubmitPlayer(); // อัปเดตคะแนนขึ้นคลาวด์ (ถ้าเชื่อมต่อ)
+  }
+  if ($("hud-score")) $("hud-score").textContent = "🏆 " + fmt(runScore);
+}
+function prizeLine() {
+  if (!pendingPrizes.length) return "";
+  return "<br />🎁 <b>ปลดล็อกรางวัล: " + pendingPrizes.map(p => p.icon + " " + p.name).join(", ") +
+    "</b> — ไปรับที่เมนู “ของรางวัล”";
+}
+function qualifiesTop(score) {
+  if (score <= 0 || sp._test) return false;
+  const top = progress.top || [];
+  return top.length < 10 || score > top[top.length - 1].s;
+}
+
 function winLevel() {
   sfx.win();
   state = S.WIN;
+  finalizeRun(true);
   const stars = Math.max(1, hearts);
   if (!sp._test) { // ด่านที่เข้าผ่านโหมดทดสอบ ไม่บันทึกความคืบหน้า
     const prev = progress.s[cfg.n] || 0;
@@ -610,19 +1113,25 @@ function winLevel() {
     : cfg.legend ? "✨ ผ่านด่านตำนาน \"" + cfg.legend.name + "\"!"
     : "ผ่านด่าน " + cfg.n + "!";
   $("win-stars").innerHTML = starStr(stars);
-  $("win-sub").textContent = isFinal
-    ? "สุดยอดนักพายเรือแห่งหนองหาน! ⭐ รวม " + totalStars() + "/300 ดวง"
-    : (cfg.n === 60 ? "ส่งบัวครบ " : "เก็บบัวครบ ") + cfg.quota + " ดอก • ได้ " + stars + " ดาว";
+  $("win-sub").innerHTML = "🏆 <b>" + fmt(runScore) + "</b> คะแนน" +
+    (comboBest >= 5 ? " • คอมโบสูงสุด ×" + (1 + Math.min(4, Math.floor(comboBest / 5))) : "") + "<br />" +
+    (isFinal ? "สุดยอดนักพายเรือแห่งหนองหาน! ⭐ รวม " + totalStars() + "/300 ดวง"
+      : (cfg.n === 60 ? "ส่งบัวครบ " : "เก็บบัวครบ ") + cfg.quota + " ดอก • ได้ " + stars + " ดาว") +
+    prizeLine();
   $("win-fact").textContent = FACTS[(cfg.n - 1) % FACTS.length];
   $("next-btn").classList.toggle("hidden", isFinal);
   showOnly(["win"]);
+  maybeNewRecord();
 }
 
 function loseLevel() {
   sfx.lose();
   state = S.LOSE;
-  $("lose-sub").textContent = "เก็บได้ " + collected + "/" + cfg.quota + " ดอก — อีกนิดเดียว ลองใหม่นะ!";
+  finalizeRun(false);
+  $("lose-sub").innerHTML = "🏆 <b>" + fmt(runScore) + "</b> คะแนน • เก็บได้ " + collected + "/" + cfg.quota +
+    " ดอก" + prizeLine() + "<br />อีกนิดเดียว ลองใหม่นะ!";
   showOnly(["lose"]);
+  maybeNewRecord();
 }
 
 $("next-btn").addEventListener("click", () => startLevel(Math.min(cfg.n + 1, TOTAL)));
@@ -692,7 +1201,8 @@ function floatText(x, y, txt, color) { floaters.push({ x, y, txt, color, life: .
 
 function gainProgress(add, x, y, gold) {
   collected += add;
-  floatText(x, y, "+" + add + " 🌸", gold ? "#ffd23f" : "#ff9dbb");
+  const pts = scoreGain(add, x, y);
+  floatText(x, y, "+" + fmt(pts), gold ? "#ffd23f" : "#ff9dbb");
   splash(x, y, gold ? "#ffd23f" : "#ff7ba1", 10);
   gold ? sfx.golden() : sfx.catch();
   updateHUD();
@@ -701,6 +1211,7 @@ function gainProgress(add, x, y, gold) {
 }
 function hurt(x, y) {
   if (invuln > 0) return false;
+  breakCombo(); // ชนของ = คอมโบหลุด (แม้โล่ช่วยไว้)
   if (progress.sh > 0) { // โล่ทองจาก AR/QR กันชนไว้ 1 ครั้ง
     progress.sh--; saveProgress();
     invuln = 1.5; shake = 5;
@@ -900,7 +1411,8 @@ function update(dt, t) {
         if (sp.basket > 0) {
           const d = sp.basket; sp.basket = 0;
           it.cd = 1;
-          floatText(ix, it.y - 50, "ส่งแล้ว +" + d + " 🧺", "#ffd23f");
+          const pts = scoreGain(d * 2, ix, it.y - 50); // ส่งเป็นล็อต คะแนนก้อนใหญ่
+          floatText(ix, it.y - 50, "ส่งแล้ว 🧺 +" + fmt(pts), "#ffd23f");
           splash(ix, it.y, "#ffd23f", 12);
           sfx.deliver();
           updateSpBar();
@@ -1695,11 +2207,22 @@ if (/[?&]bdtest=1/.test(location.search)) {
     goto: n => { startLevel(n); sp._test = true; },
     ar: () => openAR(true),
     redeem: c => redeemCode(c),
+    board: () => openBoard(),
+    prize: () => openPrize(),
+    register: (n, r) => { progress.nm = n; progress.rm = r || ""; saveProgress(); buildMenu(); },
+    setHi: v => { progress.hi = v; saveProgress(); buildMenu(); },
+    addCombo: k => { for (let i = 0; i < (k || 1); i++) scoreGain(1, W / 2, H / 2); updateHUD(); },
     info: () => ({ state, level: cfg.n, hearts, collected, quota: cfg.quota, unlocked: progress.u, stars: progress.s,
       shields: progress.sh, badges: progress.b.slice(), arGot,
+      runScore, combo, comboBest, comboMult: comboMult(), lastRun, hi: progress.hi, ls: progress.ls, top: progress.top,
+      nm: progress.nm, rm: progress.rm, pid: progress.pid, claims: progress.cl, cloudEnabled, cloudReady,
+      unclaimed: unclaimedCount(), pending: pendingPrizes.map(p => p.name),
       items: items.map(i => i.type), sp: { basket: sp.basket, order: sp.order && sp.order.slice(0, 3), ducks: sp.ducks && sp.ducks.map(d => d.flee), cloudX: sp.cloudX, wp: !!sp.wp, naga: sp.hist && sp.hist.length } }),
   };
 }
+
+// เชื่อมต่อคลาวด์ตั้งแต่เริ่ม (ถ้าตั้งค่าไว้) แล้วส่งคะแนนของเครื่องนี้ขึ้นไป
+if (cloudEnabled) initCloud().then(ok => { if (ok) cloudSubmitPlayer(); });
 
 openMenu();
 </script>

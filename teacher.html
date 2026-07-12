@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>คุณครู — คะแนน & แลกของรางวัล (พายเรือเก็บบัวแดง)</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif;
+    margin: 0; padding: 0 0 40px; color: #2a1620; background: #f7f1ee; }
+  header { background: linear-gradient(135deg, #c2497a, #7a5cd0); color: #fff; padding: 16px 18px;
+    position: sticky; top: 0; z-index: 5; }
+  header h1 { margin: 0; font-size: 19px; }
+  header .sub { font-size: 12px; opacity: .9; margin-top: 2px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px 14px; }
+  .tabs { display: flex; gap: 8px; margin: 14px 0; }
+  .tabs button { flex: 1; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+    border: none; border-radius: 12px; padding: 11px 0; color: #b06; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .tabs button.active { background: #c2497a; color: #fff; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .toolbar input { flex: 1; min-width: 160px; font: inherit; font-size: 14px; padding: 9px 12px;
+    border: 2px solid #e0b3c6; border-radius: 10px; }
+  .toolbar button { font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; color: #c2497a;
+    background: #fff; border: 2px solid #c2497a; border-radius: 10px; padding: 8px 14px; }
+  .card { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,.07); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f0e4ea; }
+  th { background: #faeef3; font-size: 12.5px; color: #7a3555; }
+  td.sc { font-weight: 800; color: #c2497a; text-align: right; white-space: nowrap; }
+  td.rk { font-weight: 800; width: 42px; text-align: center; }
+  tr.given { opacity: .55; }
+  .pill { display: inline-block; font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
+  .pill.wait { background: #ffe6b3; color: #8a5a00; }
+  .pill.done { background: #cdeccf; color: #1f6b2b; }
+  .give { font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; color: #fff;
+    background: #34a06a; border: none; border-radius: 999px; padding: 7px 13px; }
+  .give.undo { background: #b06; }
+  .hl { box-shadow: inset 0 0 0 3px #ffd23f; }
+  .empty, .note { text-align: center; padding: 26px 14px; color: #7a5a68; font-size: 14px; }
+  .warn { background: #fff3cd; color: #7a5a00; border-radius: 12px; padding: 12px 16px; font-size: 13.5px; margin-bottom: 14px; }
+  .muted { color: #999; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🛶 แดชบอร์ดคุณครู — พายเรือเก็บบัวแดง</h1>
+  <div class="sub">รายชื่อ • คะแนนสด • การแลกของรางวัล (องค์การบริหารส่วนจังหวัดอุดรธานี)</div>
+</header>
+<div class="wrap">
+  <div id="warn" class="warn" style="display:none"></div>
+  <div class="tabs">
+    <button id="tab-scores" class="active">🏆 คะแนนนักเรียน</button>
+    <button id="tab-claims">🎁 การแลกรางวัล</button>
+  </div>
+  <div class="toolbar">
+    <input id="search" placeholder="🔍 ค้นหาชื่อ / ห้อง" />
+    <button id="refresh">↻ รีเฟรช</button>
+    <button id="csv">⬇ ดาวน์โหลด CSV</button>
+    <span id="count" class="muted"></span>
+  </div>
+  <div class="card"><div id="view"><div class="note">⏳ กำลังโหลด...</div></div></div>
+</div>
+
+<script src="js/firebase-config.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const fmt = n => (Number(n) || 0).toLocaleString("en-US");
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const CFG = (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.projectId) ? window.FIREBASE_CONFIG : null;
+
+let db = null, tab = "scores", players = [], claims = [];
+const highlightClaim = (new URLSearchParams(location.search).get("claim") || "").toUpperCase();
+
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+}
+async function init() {
+  if (!CFG) {
+    $("warn").style.display = "block";
+    $("warn").innerHTML = "ยังไม่ได้ตั้งค่า Firebase — เปิดไฟล์ <b>js/firebase-config.js</b> แล้ววางค่า config ก่อน (ดู SETUP-firebase.md)";
+    $("view").innerHTML = "<div class='empty'>รอการตั้งค่า Firebase</div>";
+    return;
+  }
+  try {
+    const base = "https://www.gstatic.com/firebasejs/10.12.2/";
+    await loadScript(base + "firebase-app-compat.js");
+    await loadScript(base + "firebase-firestore-compat.js");
+    firebase.initializeApp(CFG);
+    db = firebase.firestore();
+    await refresh();
+  } catch (e) {
+    $("view").innerHTML = "<div class='empty'>เชื่อมต่อ Firebase ไม่ได้: " + esc(e.message) + "</div>";
+  }
+}
+async function refresh() {
+  $("view").innerHTML = "<div class='note'>⏳ กำลังโหลด...</div>";
+  try {
+    const [ps, cs] = await Promise.all([
+      db.collection("players").orderBy("hi", "desc").limit(500).get(),
+      db.collection("claims").orderBy("ts", "desc").limit(500).get(),
+    ]);
+    players = ps.docs.map(d => d.data());
+    claims = cs.docs.map(d => d.data());
+    render();
+  } catch (e) { $("view").innerHTML = "<div class='empty'>โหลดข้อมูลไม่ได้: " + esc(e.message) + "</div>"; }
+}
+function filt(list, keys) {
+  const q = ($("search").value || "").trim().toLowerCase();
+  if (!q) return list;
+  return list.filter(o => keys.some(k => String(o[k] || "").toLowerCase().includes(q)));
+}
+function render() {
+  if (tab === "scores") renderScores(); else renderClaims();
+}
+function renderScores() {
+  const rows = filt(players, ["name", "room"]);
+  $("count").textContent = rows.length + " คน";
+  if (!rows.length) { $("view").innerHTML = "<div class='empty'>ยังไม่มีนักเรียนส่งคะแนน</div>"; return; }
+  let h = "<table><thead><tr><th class='rk'>#</th><th>ชื่อ</th><th>ห้อง</th><th>ดาว</th><th>ตรา</th><th style='text-align:right'>คะแนนสะสม</th></tr></thead><tbody>";
+  rows.forEach((p, i) => {
+    h += "<tr><td class='rk'>" + (i < 3 ? ["🥇", "🥈", "🥉"][i] : (i + 1)) + "</td>" +
+      "<td>" + esc(p.name) + "</td><td>" + esc(p.room) + "</td>" +
+      "<td>" + fmt(p.stars) + "</td><td>" + fmt(p.badges) + "/10</td>" +
+      "<td class='sc'>" + fmt(p.hi) + "</td></tr>";
+  });
+  $("view").innerHTML = h + "</tbody></table>";
+}
+function renderClaims() {
+  const rows = filt(claims, ["name", "room", "prize", "code"]);
+  const wait = rows.filter(c => !c.given).length;
+  $("count").textContent = rows.length + " รายการ • รอจ่าย " + wait;
+  if (!rows.length) { $("view").innerHTML = "<div class='empty'>ยังไม่มีการแลกของรางวัล</div>"; return; }
+  let h = "<table><thead><tr><th>สถานะ</th><th>ชื่อ</th><th>ห้อง</th><th>รางวัล</th><th>โค้ด</th><th></th></tr></thead><tbody>";
+  rows.forEach(c => {
+    const hl = highlightClaim && c.code === highlightClaim ? " hl" : "";
+    h += "<tr class='" + (c.given ? "given" : "") + hl + "'>" +
+      "<td><span class='pill " + (c.given ? "done'>จ่ายแล้ว" : "wait'>รอจ่าย") + "</span></td>" +
+      "<td>" + esc(c.name) + "</td><td>" + esc(c.room) + "</td>" +
+      "<td>" + (c.icon || "🎁") + " " + esc(c.prize) + "</td>" +
+      "<td class='muted'>" + esc(c.code) + "</td>" +
+      "<td><button class='give " + (c.given ? "undo" : "") + "' data-code='" + esc(c.code) + "' data-given='" + (c.given ? 1 : 0) + "'>" +
+      (c.given ? "ยกเลิก" : "✓ จ่ายแล้ว") + "</button></td></tr>";
+  });
+  $("view").innerHTML = h + "</tbody></table>";
+  document.querySelectorAll(".give").forEach(b => b.addEventListener("click", () => markGiven(b.dataset.code, b.dataset.given !== "1")));
+}
+async function markGiven(code, given) {
+  try {
+    await db.collection("claims").doc(code).set({ given, givenTs: Date.now() }, { merge: true });
+    const c = claims.find(x => x.code === code); if (c) c.given = given;
+    render();
+  } catch (e) { alert("บันทึกไม่ได้: " + e.message); }
+}
+function toCSV() {
+  let rows, head;
+  if (tab === "scores") { head = ["อันดับ", "ชื่อ", "ห้อง", "ดาว", "ตรา", "คะแนนสะสม"];
+    rows = filt(players, ["name", "room"]).map((p, i) => [i + 1, p.name, p.room, p.stars || 0, (p.badges || 0) + "/10", p.hi || 0]); }
+  else { head = ["สถานะ", "ชื่อ", "ห้อง", "รางวัล", "โค้ด"];
+    rows = filt(claims, ["name", "room", "prize", "code"]).map(c => [c.given ? "จ่ายแล้ว" : "รอจ่าย", c.name, c.room, c.prize, c.code]); }
+  const csv = [head, ...rows].map(r => r.map(v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"').join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = "data:text/csv;charset=utf-8,﻿" + encodeURIComponent(csv);
+  a.download = (tab === "scores" ? "คะแนนนักเรียน" : "การแลกรางวัล") + ".csv";
+  a.click();
+}
+function setTab(t) {
+  tab = t;
+  $("tab-scores").classList.toggle("active", t === "scores");
+  $("tab-claims").classList.toggle("active", t === "claims");
+  render();
+}
+$("tab-scores").addEventListener("click", () => setTab("scores"));
+$("tab-claims").addEventListener("click", () => setTab("claims"));
+$("search").addEventListener("input", render);
+$("refresh").addEventListener("click", refresh);
+$("csv").addEventListener("click", toCSV);
+if (highlightClaim) setTab("claims");
+init();
+</script>
+</body>
+</html>
