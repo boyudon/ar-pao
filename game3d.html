@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<title>พายเรือเก็บบัวแดง 3D (ทดลอง)</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif;
+    background: #0b1020; touch-action: none; overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none; color: #fff; }
+  #game { position: fixed; inset: 0; display: block; }
+
+  #hud { position: fixed; top: 0; left: 0; right: 0; z-index: 5; pointer-events: none;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    padding: calc(10px + env(safe-area-inset-top)) 14px 0; text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+  #hud .box { background: rgba(10,14,32,.42); backdrop-filter: blur(4px); border-radius: 14px; padding: 6px 14px; }
+  #h-score { font-size: 20px; font-weight: 800; line-height: 1.15; }
+  #h-sub { font-size: 11px; opacity: .85; }
+  #h-hearts { font-size: 18px; letter-spacing: 1px; text-align: right; }
+  #h-combo { font-size: 12px; text-align: right; font-weight: 800; color: #ffd23f; min-height: 15px; }
+
+  .badge3d { position: fixed; z-index: 5; top: calc(58px + env(safe-area-inset-top)); left: 50%;
+    transform: translateX(-50%); background: rgba(10,14,32,.5); border-radius: 999px;
+    padding: 3px 12px; font-size: 11px; font-weight: 800; letter-spacing: 1px; pointer-events: none; }
+
+  .overlay { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 26px; }
+  .hidden { display: none !important; }
+  .panel { background: rgba(12,16,34,.6); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 22px; padding: 26px 24px; max-width: 340px; width: 100%; box-shadow: 0 16px 50px rgba(0,0,0,.5); }
+  .panel .logo { font-size: 46px; }
+  .panel h1 { font-size: 23px; margin: 6px 0 2px; }
+  .panel .tag { font-size: 12px; opacity: .75; margin-bottom: 4px; }
+  .panel .how { font-size: 13px; line-height: 1.8; opacity: .92; margin: 14px 0 18px;
+    background: rgba(0,0,0,.25); border-radius: 14px; padding: 10px 12px; }
+  .btn { font-family: inherit; font-size: 18px; font-weight: 800; color: #08243a;
+    background: linear-gradient(135deg, #ffd23f, #ff9d5c); border: none; border-radius: 999px;
+    padding: 14px 34px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+  .btn:active { transform: scale(.96); }
+  .btn.ghost { background: rgba(255,255,255,.14); color: #fff; box-shadow: none; font-size: 15px; padding: 11px 22px; }
+  #over .big { font-size: 54px; }
+  #over h1 { font-size: 26px; margin: 4px 0; }
+  #over .sc { font-size: 17px; margin: 2px 0 4px; }
+  #over .sc b { color: #ffd23f; font-size: 24px; }
+  #over .best { font-size: 13px; opacity: .8; margin-bottom: 18px; }
+  .row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  #exp { position: fixed; left: 0; right: 0; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 4;
+    text-align: center; font-size: 10.5px; opacity: .5; pointer-events: none; }
+  a.back { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
+    z-index: 6; color: #fff; font-size: 11px; opacity: .0; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div class="box"><div id="h-score">0</div><div id="h-sub">🛶 ระยะ 0 ม.</div></div>
+  <div class="box"><div id="h-hearts">❤️❤️❤️</div><div id="h-combo"></div></div>
+</div>
+<div id="badge3d" class="badge3d hidden">🧊 โหมด 3 มิติ (ทดลอง)</div>
+
+<!-- เริ่ม -->
+<div id="start" class="overlay">
+  <div class="panel">
+    <div class="logo">🛶</div>
+    <h1>พายเรือเก็บบัวแดง</h1>
+    <div class="tag">โหมด 3 มิติ · องค์การบริหารส่วนจังหวัดอุดรธานี</div>
+    <div class="how">ลากนิ้วซ้าย–ขวา บังคับเรือเป็ดน้อย<br />🌸 บัวแดง +10 · ⭐ บัวทอง +30<br />หลบ 🌿 ผักตบชวา · 🪵 ท่อนไม้ — ชนเสียหัวใจ!</div>
+    <button id="start-btn" class="btn">▶ เริ่มเล่น</button>
+    <div style="margin-top:12px"><a href="game.html" style="color:#9fd0ff;font-size:12.5px">← กลับเกมหลัก (100 ด่าน)</a></div>
+  </div>
+</div>
+
+<!-- จบเกม -->
+<div id="over" class="overlay hidden">
+  <div class="panel">
+    <div class="big">🛶💥</div>
+    <h1>เรือล่มแล้ว!</h1>
+    <div class="sc">คะแนน <b id="ov-score">0</b></div>
+    <div class="best" id="ov-best"></div>
+    <div class="row">
+      <button id="retry-btn" class="btn">🔁 เล่นอีกครั้ง</button>
+    </div>
+    <div style="margin-top:12px"><a href="game.html" style="color:#9fd0ff;font-size:12.5px">← กลับเกมหลัก</a></div>
+  </div>
+</div>
+
+<div id="exp">เวอร์ชันทดลอง 3D · เกมหลัก 100 ด่าน + ระบบคะแนน/รางวัลอยู่ที่ game.html</div>
+
+<script>
+"use strict";
+// ============================================================
+//  พายเรือเก็บบัวแดง — โหมด 3 มิติ (perspective canvas, ไม่พึ่ง CDN)
+//  กล้องมองไปตามลำน้ำ ของลอยวิ่งจากเส้นขอบฟ้าเข้าหาเรือ
+// ============================================================
+const cvs = document.getElementById("game");
+const ctx = cvs.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  cvs.width = W * DPR; cvs.height = H * DPR;
+  cvs.style.width = W + "px"; cvs.style.height = H + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+// ---------- กล้อง 3 มิติ ----------
+const CAM = { h: 2.5, z: -4.6, pitch: 0.235 };  // สูง, ถอยหลัง, ก้มลง (เรเดียน)
+let FOCAL = 1, HZN = 0.52, HORIZON = 0;
+function calcFocal() {
+  FOCAL = W * 0.82; HZN = 0.52;
+  HORIZON = H * HZN - FOCAL * Math.tan(CAM.pitch); // เส้นขอบฟ้าจริง (จุดลับตาของพื้นน้ำ)
+}
+calcFocal();
+window.addEventListener("resize", calcFocal);
+const LANE = 3.1;        // ครึ่งความกว้างเลนน้ำ (world units)
+const BOATZ = 0;         // ตำแหน่งเรือตามแนวลึก
+const FAR = 42;          // ระยะเกิดของลอย
+// แปลงพิกัดโลก (X ขวา, Y ขึ้น, Z ไปข้างหน้า) → จอ
+function proj(X, Y, Z) {
+  const dx = X, dy = Y - CAM.h, dz = Z - CAM.z;
+  const c = Math.cos(CAM.pitch), s = Math.sin(CAM.pitch);
+  const ry = dy * c + dz * s;
+  const rz = -dy * s + dz * c;
+  if (rz < 0.06) return { vis: false };
+  const scale = FOCAL / rz;
+  return { vis: true, x: W / 2 + dx * scale, y: H * HZN - ry * scale, scale, rz };
+}
+
+// ---------- สถานะ ----------
+const S = { START: 0, PLAY: 1, OVER: 2, PAUSE: 3 };
+let state = S.START;
+let score = 0, combo = 0, hearts = 3, dist = 0, speed = 8, invuln = 0, shake = 0;
+let items = [], parts = [], floats = [], pads = [], spawnT = 0;
+const boat = { x: 0, tx: 0 };
+let best = 0;
+try { best = +localStorage.getItem("buaDaeng3dBest") || 0; } catch (e) {}
+
+// ---------- เสียง ----------
+let actx = null;
+function initAudio() { if (!actx) { try { actx = new (AudioContext || webkitAudioContext)(); } catch (e) {} } if (actx && actx.state === "suspended") actx.resume(); }
+function tone(f, d, ty, v, dl) { if (!actx) return; const t = actx.currentTime + (dl || 0); const o = actx.createOscillator(), g = actx.createGain(); o.type = ty || "sine"; o.frequency.value = f; g.gain.setValueAtTime(v || .15, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + .02); }
+const sfx = {
+  pick() { tone(660, .1, "sine", .18); tone(880, .12, "sine", .13, .06); },
+  gold() { [660, 880, 1100, 1320].forEach((f, i) => tone(f, .12, "triangle", .15, i * .06)); },
+  hit() { tone(150, .25, "square", .2); tone(90, .3, "square", .14, .05); },
+  over() { [440, 350, 260, 180].forEach((f, i) => tone(f, .22, "sine", .16, i * .13)); },
+};
+
+// ---------- ตัวช่วย UI ----------
+const $ = id => document.getElementById(id);
+function updHUD() {
+  $("h-score").textContent = score.toLocaleString("en-US");
+  $("h-sub").textContent = "🛶 ระยะ " + Math.floor(dist) + " ม.";
+  $("h-hearts").textContent = "❤️".repeat(hearts) + "🖤".repeat(Math.max(0, 3 - hearts));
+  $("h-combo").textContent = combo >= 3 ? "🔥 คอมโบ ×" + comboMult() : "";
+}
+function comboMult() { return 1 + Math.min(4, Math.floor(combo / 4)); }
+
+// ---------- เริ่ม / จบ ----------
+function makePads() {
+  pads = [];
+  for (let i = 0; i < 26; i++) pads.push({ x: (Math.random() * 2 - 1) * LANE * 2.4, z: 1 + Math.random() * FAR, s: .3 + Math.random() * .5, ph: Math.random() * 7 });
+}
+makePads();
+function start() {
+  initAudio();
+  score = 0; combo = 0; hearts = 3; dist = 0; speed = 8; invuln = 0; shake = 0;
+  items = []; parts = []; floats = []; spawnT = .5; boat.x = boat.tx = 0;
+  $("start").classList.add("hidden"); $("over").classList.add("hidden");
+  $("hud").classList.remove("hidden"); $("badge3d").classList.remove("hidden");
+  updHUD();
+  state = S.PLAY; last = performance.now();
+}
+function gameOver() {
+  sfx.over();
+  state = S.OVER;
+  if (score > best) { best = score; try { localStorage.setItem("buaDaeng3dBest", best); } catch (e) {} }
+  $("ov-score").textContent = score.toLocaleString("en-US");
+  $("ov-best").textContent = "🏆 สถิติสูงสุด " + best.toLocaleString("en-US") + " · ระยะ " + Math.floor(dist) + " ม.";
+  $("hud").classList.add("hidden"); $("badge3d").classList.add("hidden");
+  $("over").classList.remove("hidden");
+}
+$("start-btn").addEventListener("click", start);
+$("retry-btn").addEventListener("click", start);
+
+// ---------- ควบคุม ----------
+let dragging = false, dragX = 0, dragBoat = 0;
+function pointerX(e) { return (e.touches ? e.touches[0].clientX : e.clientX); }
+cvs.addEventListener("pointerdown", e => { if (state !== S.PLAY) return; dragging = true; dragX = e.clientX; dragBoat = boat.tx; });
+cvs.addEventListener("pointermove", e => {
+  if (!dragging || state !== S.PLAY) return;
+  const dxWorld = (e.clientX - dragX) / (W * 0.5) * LANE * 1.15;
+  boat.tx = Math.max(-LANE, Math.min(LANE, dragBoat + dxWorld));
+});
+window.addEventListener("pointerup", () => dragging = false);
+const keys = {};
+window.addEventListener("keydown", e => { keys[e.key] = true; });
+window.addEventListener("keyup", e => { keys[e.key] = false; });
+document.addEventListener("visibilitychange", () => { if (document.hidden && state === S.PLAY) state = S.PAUSE; });
+cvs.addEventListener("pointerdown", () => { if (state === S.PAUSE) { state = S.PLAY; last = performance.now(); } });
+
+// ---------- สุ่มของลอย ----------
+function spawn() {
+  const r = Math.random();
+  let type;
+  if (r < 0.07) type = "golden";
+  else if (r < 0.07 + Math.min(0.4, 0.18 + dist * 0.0008)) type = (Math.random() < 0.6 ? "hyacinth" : "log");
+  else type = "lotus";
+  const x = (Math.random() * 2 - 1) * (LANE - 0.4);
+  items.push({ type, x, z: FAR, bob: Math.random() * 7, r: type === "log" ? 0.75 : 0.55 });
+}
+function splash(x, z, color, n) {
+  const p = proj(x, 0.2, z); if (!p.vis) return;
+  for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, sp = 30 + Math.random() * 90; parts.push({ sx: p.x, sy: p.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 40, life: .6, t: .6, color }); }
+}
+function floatTxt(x, z, txt, color) { const p = proj(x, 1.1, z); if (p.vis) floats.push({ sx: p.x, sy: p.y, txt, color, life: .9, t: .9 }); }
+
+function addScore(base, x, z) {
+  combo++;
+  const pts = base * comboMult();
+  score += pts;
+  if (combo >= 4 && combo % 4 === 0) floatTxt(0, BOATZ + 2.5, "🔥 คอมโบ ×" + comboMult() + "!", "#ffd23f");
+  floatTxt(x, z, "+" + pts, base >= 30 ? "#ffd23f" : "#ff9dbb");
+  updHUD();
+}
+function hurt(x, z) {
+  if (invuln > 0) return;
+  combo = 0; hearts--; invuln = 1.4; shake = 12;
+  splash(x, z, "#9be48a", 16); sfx.hit(); updHUD();
+  if (hearts <= 0) gameOver();
+}
+
+// ---------- อัปเดต ----------
+function update(dt) {
+  if (keys.ArrowLeft) boat.tx = Math.max(-LANE, boat.tx - 5 * dt);
+  if (keys.ArrowRight) boat.tx = Math.min(LANE, boat.tx + 5 * dt);
+  boat.x += (boat.tx - boat.x) * Math.min(1, dt * 12);
+
+  speed = 8 + dist * 0.012;           // เร็วขึ้นเรื่อย ๆ
+  dist += speed * dt * 0.5;
+  score += 0;                          // (ระยะไม่ให้คะแนนตรง ๆ กันเฟ้อ)
+  if (invuln > 0) invuln -= dt;
+  if (shake > 0) shake -= dt * 40;
+
+  spawnT -= dt;
+  if (spawnT <= 0) { spawn(); spawnT = Math.max(0.42, 0.95 - dist * 0.0016) * (0.75 + Math.random() * 0.5); }
+
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    it.z -= speed * dt;
+    if (Math.abs(it.z - BOATZ) < 0.7 && Math.abs(it.x - boat.x) < it.r + 0.55) {
+      if (it.type === "lotus" || it.type === "golden") {
+        addScore(it.type === "golden" ? 30 : 10, it.x, it.z);
+        splash(it.x, it.z, it.type === "golden" ? "#ffd23f" : "#ff7ba1", 12);
+        it.type === "golden" ? sfx.gold() : sfx.pick();
+        items.splice(i, 1); continue;
+      } else { hurt(it.x, it.z); items.splice(i, 1); if (state !== S.PLAY) return; continue; }
+    }
+    if (it.z < CAM.z - 1) items.splice(i, 1);
+  }
+  for (const pd of pads) { pd.z -= speed * dt; if (pd.z < CAM.z - 1) { pd.z += FAR; pd.x = (Math.random() * 2 - 1) * LANE * 2.4; } }
+  for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life -= dt; if (p.life <= 0) { parts.splice(i, 1); continue; } p.sx += p.vx * dt; p.sy += p.vy * dt; p.vy += 240 * dt; }
+  for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.life -= dt; f.sy -= 42 * dt; if (f.life <= 0) floats.splice(i, 1); }
+  updHUD();
+}
+
+// ---------- วาดฉาก 3 มิติ ----------
+function drawSky(t) {
+  const hy = HORIZON;
+  const g = ctx.createLinearGradient(0, 0, 0, hy);
+  g.addColorStop(0, "#3a2c66"); g.addColorStop(0.5, "#8a5a86"); g.addColorStop(1, "#f0a67a");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, hy);
+  // ดวงอาทิตย์
+  ctx.fillStyle = "rgba(255,225,180,.9)"; ctx.beginPath(); ctx.arc(W * 0.68, hy * 0.62, Math.min(W, H) * 0.07, 0, 6.29); ctx.fill();
+  // แนวต้นไม้ไกล ๆ ที่ขอบฟ้า
+  ctx.fillStyle = "rgba(40,60,55,.55)";
+  ctx.beginPath(); ctx.moveTo(0, hy);
+  for (let x = 0; x <= W; x += 26) ctx.lineTo(x, hy - 6 - (Math.sin(x * 0.05 + 1) * 0.5 + 0.5) * 16 - (Math.sin(x * 0.13) * 0.5 + 0.5) * 8);
+  ctx.lineTo(W, hy); ctx.closePath(); ctx.fill();
+}
+function drawWater(t) {
+  const hy = HORIZON;
+  const g = ctx.createLinearGradient(0, hy, 0, H);
+  g.addColorStop(0, "#b06a86"); g.addColorStop(0.25, "#7a4a86"); g.addColorStop(1, "#2a2a5a");
+  ctx.fillStyle = g; ctx.fillRect(0, hy, W, H - hy);
+  // เส้นเลนตามแนวลึก (X คงที่) — ลู่เข้าหาจุดลับตา
+  ctx.lineWidth = 1;
+  for (let xi = -3; xi <= 3; xi++) {
+    const x = xi / 3 * LANE;
+    const a = proj(x, 0, 0.4), b = proj(x, 0, FAR);
+    if (a.vis && b.vis) { ctx.strokeStyle = "rgba(255,220,235," + (xi === 0 ? .12 : .07) + ")"; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+  }
+  // ระลอกคลื่นตามขวาง (Z คงที่) เลื่อนเข้าหาเรา
+  const off = (t * speed * 0.5) % 2;
+  for (let z = 2 - off; z < FAR; z += 2) {
+    const a = proj(-LANE * 1.6, 0, z), b = proj(LANE * 1.6, 0, z);
+    if (a.vis && b.vis) {
+      const k = Math.max(0, 1 - z / FAR);
+      ctx.strokeStyle = "rgba(220,190,230," + (0.03 + k * 0.10) + ")";
+      ctx.lineWidth = 1 + k * 1.5;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y + Math.sin(z + t * 2) * 1.5); ctx.lineTo(b.x, b.y + Math.sin(z + 2 + t * 2) * 1.5); ctx.stroke();
+    }
+  }
+  // ใบบัวลอย (จุดไล่ระยะ ช่วยให้รู้สึกลึก)
+  for (const pd of pads) {
+    const p = proj(pd.x, 0, pd.z); if (!p.vis) continue;
+    const rr = pd.s * p.scale;
+    if (rr < 0.6) continue;
+    ctx.fillStyle = "rgba(40,110,80,.42)";
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, rr, rr * 0.5, 0, 0, 6.29); ctx.fill();
+  }
+}
+
+// เงาใต้วัตถุ
+function shadow(x, z, rWorld) {
+  const p = proj(x, 0, z); if (!p.vis) return;
+  const rr = rWorld * p.scale;
+  ctx.fillStyle = "rgba(10,8,25,.28)";
+  ctx.beginPath(); ctx.ellipse(p.x, p.y, rr, rr * 0.42, 0, 0, 6.29); ctx.fill();
+}
+function haze(z) { return Math.max(0, Math.min(1, 1 - (z - 8) / (FAR - 6))); } // ไกล = จาง
+
+function drawLotus3D(cx, cy, s, golden, t, ph) {
+  ctx.save(); ctx.translate(cx, cy);
+  ctx.fillStyle = "rgba(40,105,75,.7)"; ctx.beginPath(); ctx.ellipse(0, s * .32, s * 1.15, s * .42, 0, 0, 6.29); ctx.fill();
+  for (let i = 0; i < 7; i++) {
+    ctx.save(); ctx.rotate(i / 7 * 6.283 + ph);
+    const g = ctx.createLinearGradient(0, -s, 0, 0);
+    if (golden) { g.addColorStop(0, "#ffe27a"); g.addColorStop(1, "#f0a92e"); } else { g.addColorStop(0, "#ffc0d2"); g.addColorStop(1, "#e5407a"); }
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, -s * .55, s * .33, s * .62, 0, 0, 6.29); ctx.fill(); ctx.restore();
+  }
+  ctx.fillStyle = golden ? "#fff3b0" : "#ffd23f"; ctx.beginPath(); ctx.arc(0, 0, s * .28, 0, 6.29); ctx.fill();
+  if (golden) { ctx.strokeStyle = "rgba(255,240,170,.9)"; ctx.lineWidth = 2; for (let i = 0; i < 4; i++) { const a = t * 3 + i * 1.57; ctx.beginPath(); ctx.moveTo(Math.cos(a) * s * 1.1, Math.sin(a) * s * 1.1); ctx.lineTo(Math.cos(a) * s * 1.5, Math.sin(a) * s * 1.5); ctx.stroke(); } }
+  ctx.restore();
+}
+function drawHyacinth3D(cx, cy, s) {
+  ctx.save(); ctx.translate(cx, cy);
+  ctx.fillStyle = "#3f8f4f";
+  for (const [ox, oy, r] of [[-.55, .1, .6], [.5, .06, .55], [0, .28, .68], [0, -.22, .48]]) { ctx.beginPath(); ctx.ellipse(ox * s, oy * s, s * r, s * r * .8, 0, 0, 6.29); ctx.fill(); }
+  ctx.fillStyle = "#2e6e3c"; ctx.beginPath(); ctx.ellipse(-s * .28, s * .08, s * .38, s * .28, .5, 0, 6.29); ctx.fill();
+  ctx.fillStyle = "#b087e0"; ctx.beginPath(); ctx.arc(s * .18, -s * .55, s * .2, 0, 6.29); ctx.fill(); ctx.beginPath(); ctx.arc(s * .35, -s * .72, s * .14, 0, 6.29); ctx.fill();
+  ctx.restore();
+}
+function drawLog3D(cx, cy, s) {
+  ctx.save(); ctx.translate(cx, cy);
+  const g = ctx.createLinearGradient(0, -s * .3, 0, s * .3); g.addColorStop(0, "#8a5a34"); g.addColorStop(1, "#5c3a20");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(-s, -s * .3, s * 2, s * .6, s * .3); ctx.fill();
+  ctx.fillStyle = "#c99b6a"; ctx.beginPath(); ctx.ellipse(s, 0, s * .13, s * .3, 0, 0, 6.29); ctx.fill();
+  ctx.strokeStyle = "rgba(60,35,18,.6)"; ctx.lineWidth = 2; for (const ox of [-.5, 0, .45]) { ctx.beginPath(); ctx.moveTo(ox * s, -s * .18); ctx.quadraticCurveTo(ox * s + 6, 0, ox * s, s * .18); ctx.stroke(); }
+  ctx.restore();
+}
+
+// เรือเป็ด 3 มิติ (ตัวเรือฉายจากพิกัดโลก + เป็ดบิลบอร์ด)
+function drawBoat(t) {
+  const bx = boat.x, blink = invuln > 0 && Math.floor(invuln * 10) % 2 === 0;
+  shadow(bx, BOATZ, 1.15);
+  // ตัวเรือแคนู 3 มิติ: หัวแหลม (ลึก +z) ท้ายแหลม (ใกล้ -z) ป่องกลาง
+  const hull = [
+    [0, 1.7], [0.82, 0.5], [0.6, -0.7], [0, -1.05], [-0.6, -0.7], [-0.82, 0.5],
+  ].map(p => proj(bx + p[0], 0.03, BOATZ + p[1]));
+  if (hull.every(p => p.vis)) {
+    ctx.globalAlpha = blink ? 0.4 : 1;
+    const g = ctx.createLinearGradient(0, hull[0].y, 0, hull[3].y);
+    g.addColorStop(0, "#a2603a"); g.addColorStop(1, "#5f351d");
+    ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(hull[0].x, hull[0].y);
+    for (let i = 1; i < hull.length; i++) ctx.lineTo(hull[i].x, hull[i].y);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#3e2210"; ctx.lineWidth = 2.5; ctx.stroke();
+    // ท้องเรือด้านใน (เล็กลง ยกขึ้นเล็กน้อย)
+    ctx.fillStyle = "#7a4a2a";
+    const inr = [[0, 1.15], [0.5, 0.35], [0.36, -0.5], [0, -0.72], [-0.36, -0.5], [-0.5, 0.35]].map(p => proj(bx + p[0], 0.16, BOATZ + p[1]));
+    if (inr.every(p => p.vis)) { ctx.beginPath(); ctx.moveTo(inr[0].x, inr[0].y); for (let i = 1; i < inr.length; i++) ctx.lineTo(inr[i].x, inr[i].y); ctx.closePath(); ctx.fill(); }
+    // เป็ดกัปตัน (บิลบอร์ด) ยืนกลางเรือ
+    const dp = proj(bx, 0.15, BOATZ + 0.35);
+    if (dp.vis) drawDuck(dp.x, dp.y, dp.scale * 0.62, t);
+    ctx.globalAlpha = 1;
+    // คลื่นหัวเรือ
+    if (Math.abs(boat.tx - boat.x) > 0.05 || true) {
+      const wa = proj(bx - 0.8, 0, BOATZ + 1.2), wb = proj(bx + 0.8, 0, BOATZ + 1.2), wc = proj(bx, 0, BOATZ + 1.9);
+      if (wa.vis && wb.vis && wc.vis) { ctx.strokeStyle = "rgba(255,255,255,.3)"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(wa.x, wa.y); ctx.quadraticCurveTo(wc.x, wc.y, wb.x, wb.y); ctx.stroke(); }
+    }
+  }
+}
+function drawDuck(cx, cy, s, t) {
+  const bob = Math.sin(t * 3) * s * 0.06;
+  ctx.save(); ctx.translate(cx, cy + bob);
+  ctx.fillStyle = "rgba(10,8,25,.2)"; ctx.beginPath(); ctx.ellipse(0, s * 0.2, s * 0.9, s * 0.3, 0, 0, 6.29); ctx.fill();
+  ctx.fillStyle = "#ffd23f"; ctx.beginPath(); ctx.ellipse(-s * .1, -s * .55, s * .85, s * .68, 0, 0, 6.29); ctx.fill(); // ตัว
+  ctx.fillStyle = "#ffdf6b"; ctx.beginPath(); ctx.ellipse(-s * .8, -s * .75, s * .38, s * .5, -.6, 0, 6.29); ctx.fill(); // หาง
+  ctx.fillStyle = "#ffd23f"; ctx.beginPath(); ctx.arc(s * .38, -s * 1.35, s * .55, 0, 6.29); ctx.fill(); // หัว
+  ctx.fillStyle = "#f58a3c"; ctx.beginPath(); ctx.ellipse(s * .95, -s * 1.3, s * .34, s * .2, 0, 0, 6.29); ctx.fill(); // ปาก
+  ctx.fillStyle = "#2b1a10"; ctx.beginPath(); ctx.arc(s * .5, -s * 1.5, s * .12, 0, 6.29); ctx.fill(); // ตา
+  ctx.strokeStyle = "rgba(255,255,255,.85)"; ctx.lineWidth = Math.max(1, s * .05); ctx.beginPath(); ctx.arc(s * .45, -s * 1.55, s * .05, 0, 6.29); ctx.stroke();
+  // พาย
+  ctx.strokeStyle = "#7a4a26"; ctx.lineWidth = Math.max(2, s * .12); ctx.beginPath(); ctx.moveTo(s * .2, -s * .7); ctx.lineTo(s * 1.1, s * .35); ctx.stroke();
+  ctx.restore();
+}
+
+function draw(t) {
+  ctx.save();
+  if (shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+  drawSky(t);
+  drawWater(t);
+  // เรียงของลอย + เรือ ตามระยะ (ไกล → ใกล้)
+  const drawList = items.map(it => ({ z: it.z, it })).concat([{ z: BOATZ, boat: true }]);
+  drawList.sort((a, b) => b.z - a.z);
+  for (const d of drawList) {
+    if (d.boat) { drawBoat(t); continue; }
+    const it = d.it;
+    const p = proj(it.x, 0.12, it.z); if (!p.vis) continue;
+    const s = it.r * p.scale;
+    if (s < 1) continue;
+    const hz = haze(it.z);
+    shadow(it.x, it.z, it.r * 0.9);
+    ctx.globalAlpha = 0.25 + 0.75 * hz;
+    const bob = Math.sin(t * 2 + it.bob) * s * 0.05;
+    if (it.type === "lotus") drawLotus3D(p.x, p.y - bob, s, false, t, it.bob);
+    else if (it.type === "golden") drawLotus3D(p.x, p.y - bob, s * 1.05, true, t, it.bob);
+    else if (it.type === "hyacinth") drawHyacinth3D(p.x, p.y - bob, s);
+    else drawLog3D(p.x, p.y - bob, s);
+    ctx.globalAlpha = 1;
+  }
+  // อนุภาค + ตัวเลขคะแนน
+  for (const p of parts) { ctx.globalAlpha = Math.max(0, p.life / p.t); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.sx, p.sy, 3, 0, 6.29); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  for (const f of floats) { ctx.globalAlpha = Math.max(0, f.life / f.t); ctx.font = "800 22px 'Sukhumvit Set','Noto Sans Thai',sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = f.color; ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.lineWidth = 3; ctx.strokeText(f.txt, f.sx, f.sy); ctx.fillText(f.txt, f.sx, f.sy); }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  if (state === S.PAUSE) { ctx.fillStyle = "rgba(6,8,20,.55)"; ctx.fillRect(0, 0, W, H); ctx.fillStyle = "#fff"; ctx.font = "800 22px 'Noto Sans Thai',sans-serif"; ctx.textAlign = "center"; ctx.fillText("⏸ แตะเพื่อเล่นต่อ", W / 2, H / 2); }
+}
+
+// ---------- ลูป ----------
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const t = now / 1000;
+  if (state === S.PLAY) update(dt);
+  else { for (const pd of pads) { pd.z -= 3 * dt; if (pd.z < CAM.z - 1) pd.z += FAR; } } // ฉากไหลเบา ๆ ตอนเมนู
+  draw(t);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+// ---------- โหมดทดสอบ ----------
+if (/[?&]bdtest=1/.test(location.search)) {
+  window.__bd3 = {
+    start, over: () => { hearts = 0; gameOver(); },
+    spawnAt: (type, x, z) => items.push({ type, x, z: z == null ? 8 : z, bob: 0, r: type === "log" ? .75 : .55 }),
+    hitBoat: () => { const it = { type: "log", x: boat.x, z: BOATZ, bob: 0, r: .75 }; items.push(it); },
+    setDist: d => { dist = d; },
+    info: () => ({ state, score, combo, comboMult: comboMult(), hearts, dist: Math.floor(dist), speed: +speed.toFixed(1), items: items.length, best,
+      proj0: proj(0, 0, BOATZ), projFar: proj(0, 0, 30) }),
+  };
+}
+</script>
+</body>
+</html>
