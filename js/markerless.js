@@ -72,6 +72,16 @@
       const pedX = (cfg.pedestal && cfg.pedestal.offsetX != null) ? cfg.pedestal.offsetX : 0;
       pedestal.setAttribute('position', pedX + ' ' + (-centerY) + ' 0');
     }
+    // เงานุ่มใต้เท้า (เฉพาะหน้าที่มี #feet-shadow): วางที่ "ระดับเท้า" ในเฟรมวิดีโอ
+    // (แทนแท่นยืน) — feetFrac = สัดส่วนช่องว่างใต้เท้าจากขอบล่างเฟรม, offsetX = กึ่งกลางสองเท้า
+    // เป็น child ของ #director-plane → เงาเลื่อน/หมุนตาม billboard อยู่ใต้เท้าเสมอ
+    const feetShadow = document.getElementById('feet-shadow');
+    if (feetShadow) {
+      const fsX = (cfg.pedestal && cfg.pedestal.offsetX != null) ? cfg.pedestal.offsetX : 0;
+      const feetFrac = (w.feetFrac != null) ? w.feetFrac : 0.035;
+      const feetLocalY = -H / 2 + feetFrac * H;   // ตำแหน่งเท้าเทียบจุดกลางระนาบ
+      feetShadow.setAttribute('position', fsX + ' ' + feetLocalY.toFixed(3) + ' 0.02');
+    }
 
     function applyPlane() {
       const aspect = (clip.videoWidth && clip.videoHeight)
