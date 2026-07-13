@@ -51,22 +51,7 @@
     const H    = w.heightMeters   != null ? w.heightMeters   : 2.4;
     const yOff = w.yOffset        != null ? w.yOffset         : 0;
     const centerY = yOff + H / 2;
-    // ตำแหน่งเริ่มต้นของ ผอ.:
-    //  - ถ้ากำหนด world.panoU (พิกัดแนวนอน 0..1 บนภาพ 360°) → ฝังท่านให้ยืน "หน้าจุดนั้นในฉาก"
-    //    (เช่น หน้าอาคารเสาธง) โดยไม่ขึ้นกับทิศที่มือถือชี้ — ผู้ใช้หมุนหามือถือเจอท่านยืนอยู่ที่เดิม
-    //    mapping a-sky (three.js SphereGeometry): ทิศของ texel u = (-cos 2πu, 0, sin 2πu)
-    //  - ถ้าไม่กำหนด → ใช้ placeInFront วางตรงหน้าทิศที่มือถือชี้ตอนเริ่ม (ค่าเดิม, ร.ร.อื่นไม่กระทบ)
-    function panoDir() {
-      const ang = 2 * Math.PI * w.panoU;
-      return { x: -Math.cos(ang), z: Math.sin(ang) };
-    }
-    if (w.panoU != null) {
-      const d = panoDir();
-      director.setAttribute('position',
-        (d.x * dist).toFixed(3) + ' ' + centerY + ' ' + (d.z * dist).toFixed(3));
-    } else {
-      director.setAttribute('position', '0 ' + centerY + ' ' + (-dist));
-    }
+    director.setAttribute('position', '0 ' + centerY + ' ' + (-dist));
     // billboard เฉพาะระนาบ ผอ. (เรือ/ดอกบัวจะได้ไม่หมุนตาม)
     if (w.faceUser !== false) plane.setAttribute('billboard-yaw', '');
     // เรือ + วงดอกบัวล้อมรอบ: ลงไปอยู่ระดับพื้น (y=0 ของโลก)
@@ -119,16 +104,11 @@
     applyPlane();
     clip.addEventListener('loadedmetadata', applyPlane);
 
-    // วาง ผอ. (+ ดอกบัวที่เท้า) ไว้ตรงหน้าทิศที่มือถือชี้อยู่ตอนเริ่ม
-    // (ยกเว้นเมื่อกำหนด world.panoU = ฝังท่านที่จุดคงที่ในฉาก เช่น หน้าอาคารเสาธง)
+    // วาง ผอ. ไว้ "ตรงหน้าจอตอนเริ่ม" เสมอ (ตามทิศที่มือถือชี้ขณะแตะเริ่ม)
+    // ถ้ากำหนด world.panoU → หมุนฉาก 360° ให้ "จุดนั้นในฉาก" (เช่น อาคารเสาธง)
+    // ไปอยู่ข้างหลังท่านพอดี ⇒ เปิดจอมาเจอท่านกลางจอ + อาคารเสาธงเป็นฉากหลังทันที
+    // (ต้องหมุนฉากแทนการหมุนกล้อง เพราะไจโร/magic-window ทับค่าการหมุนกล้อง)
     function placeInFront() {
-      if (w.panoU != null) {
-        const d = panoDir();
-        director.setAttribute('position',
-          (d.x * dist).toFixed(3) + ' ' + centerY + ' ' + (d.z * dist).toFixed(3));
-        log('วาง ผอ. หน้าอาคารเสาธง (panoU=' + w.panoU + ')');
-        return;
-      }
       if (!camEl || !camEl.object3D) return;
       const q = camEl.object3D.quaternion;
       const fwd = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
@@ -137,7 +117,21 @@
       fwd.normalize();
       director.setAttribute('position',
         (fwd.x * dist).toFixed(2) + ' ' + centerY + ' ' + (fwd.z * dist).toFixed(2));
-      log('วาง ผอ. ตรงหน้าแล้ว');
+      // หมุนฉากให้ texel panoU ไปอยู่ในทิศเดียวกับที่ท่านยืน (= ข้างหลังท่าน)
+      // mapping a-sky (three.js SphereGeometry): texel u → ทิศ D(u)=(-cos2πu, 0, sin2πu)
+      // R_y(θ) หมุนเวกเตอร์ XZ ไป -θ ⇒ ต้องหมุน sky ด้วย θ = φ(D) − φ(fwd), φ=atan2(z,x)
+      if (w.panoU != null) {
+        const sky = document.getElementById('sky');
+        if (sky) {
+          const a = 2 * Math.PI * w.panoU;
+          const phiD = Math.atan2(Math.sin(a), -Math.cos(a));      // φ ของ D(u)
+          const phiF = Math.atan2(fwd.z, fwd.x);                   // φ ของทิศที่ท่านยืน
+          const Ry = (phiD - phiF) * 180 / Math.PI;
+          sky.setAttribute('rotation', '0 ' + Ry.toFixed(2) + ' 0');
+          log('หมุนฉากให้อาคารเสาธงอยู่หลังท่าน (Ry=' + Ry.toFixed(1) + ')');
+        }
+      }
+      log('วาง ผอ. ตรงหน้าจอเริ่มต้นแล้ว');
     }
 
     // ---- เตือนเบราว์เซอร์ที่ใช้ไม่ได้ ----
