@@ -266,6 +266,23 @@
   #coupon-code { font-size: 20px; font-weight: 800; letter-spacing: 2px; color: #c2497a; margin: 8px 0 0;
     font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
   .coupon-card .btn { margin-top: 14px; }
+
+  /* ---------- 🔭 ชม AR 30 วินาที ---------- */
+  #arv-line { text-align: center; font-size: 13px; font-weight: 800; color: #7fe0c0; margin: -4px 0 12px; }
+  #arv { z-index: 38; background: rgba(20,8,16,.82); }
+  #arv-crest { margin-bottom: 4px; }
+  #arv-crest img { width: 74px; height: 74px; border-radius: 50%; object-fit: contain; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+  #arv-crest span { font-size: 54px; }
+  #arv-ring { position: relative; width: 140px; height: 140px; margin: 10px auto 8px; }
+  #arv-ring svg { width: 140px; height: 140px; transform: rotate(-90deg); }
+  #arv-ring circle { fill: none; stroke-width: 10; }
+  #arv-ring circle.bg { stroke: rgba(194,73,122,.16); }
+  #arv-arc { stroke: #c2497a; stroke-linecap: round; transition: stroke-dashoffset .2s linear; }
+  #arv-num { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 40px; font-weight: 800; color: #c2497a; }
+  #arv.done #arv-arc { stroke: #34a06a; }
+  #arv.done #arv-num { color: #34a06a; }
+  #arv-open { display: inline-block; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -287,6 +304,7 @@
     <h1>🛶 พายเรือเก็บบัวแดง</h1>
     <div id="total-stars">⭐ 0/300</div>
     <div id="total-score">🏆 คะแนนสะสม 0</div>
+    <div id="arv-line"></div>
     <div class="how">ลากนิ้วซ้าย–ขวาบังคับเรือเป็ดน้อย • 🌸 บัวแดง +1 • ⭐ บัวทอง +3<br />หลบ 🌿 ผักตบชวา 🪵 ท่อนไม้ ⛵ เรือประมง — ชนแล้วเสียหัวใจ!<br />ด่านลงท้ายด้วย 0 = <b>ด่านตำนาน ✨</b> กติกาพิเศษไม่เหมือนใคร<br />💛 โล่ทองกันชนได้ 1 ครั้ง — หาจาก 📷 ล่าสมบัติ AR และ 🔑 โค้ดลับ QR</div>
     <div class="act-row">
       <button id="ar-btn" class="btn ar">📷 ล่าสมบัติ AR</button>
@@ -434,6 +452,25 @@
   </div>
 </div>
 
+<!-- 🔭 ชม AR 30 วินาที -->
+<div id="arv" class="overlay hidden">
+  <div class="gift-card">
+    <div id="arv-crest"></div>
+    <h2 id="arv-title">ชม AR</h2>
+    <p id="arv-sub"></p>
+    <div id="arv-ring">
+      <svg viewBox="0 0 140 140"><circle class="bg" cx="70" cy="70" r="60"></circle><circle id="arv-arc" cx="70" cy="70" r="60"></circle></svg>
+      <div id="arv-num">30</div>
+    </div>
+    <a id="arv-open" class="btn ghost" style="color:#5a2740;display:none" target="_blank" rel="noopener">▶ เปิดสื่อ AR โรงเรียนนี้ ↗</a>
+    <div id="arv-hint" class="mini-note">ถือหน้าจอนี้ไว้ระหว่างชม AR ที่บูธ — ออกจากหน้านี้เวลาจะหยุดนับ</div>
+    <div class="btn-row" style="margin-top:12px">
+      <button id="arv-claim" class="btn" style="display:none">🎁 รับรางวัล!</button>
+      <button id="arv-close" class="btn ghost" style="color:#5a2740">ปิด</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/firebase-config.js"></script>
 <script src="js/qrcode-gen.js"></script>
 <script>
@@ -557,6 +594,15 @@ const BONUS = {
 const SHIELD_MAX = 5;
 
 // ============================================================
+//  🔭 ล่าแต้ม AR 10 โรงเรียน — สแกน QR ที่บูธ → ชมสื่อ AR ครบ 30 วินาที → รับรางวัล
+//  AR_URL: โรงเรียนที่มีสื่อ AR บนเว็บ (กดเปิดชมได้เลย) — โรงเรียนอื่นชมที่บูธ
+// ============================================================
+const AR_WATCH_SEC = 30;   // ต้องชมอย่างน้อยกี่วินาที
+const AR_REWARD_HI = 250;  // คะแนนสะสมต่อโรงเรียน
+const AR_ALL_BONUS = 2000; // โบนัสเมื่อครบ 10 โรงเรียน
+const AR_URL = { NASAI: "nasai/", PHANGNGU: "phangngu/", KUNGCHAROEN: "kungcharoen/", CHAELAE: "chaelae/", CHAINAKHAM: "chainakham/" };
+
+// ============================================================
 //  🎁 ของรางวัล — ปลดล็อกเมื่อ "คะแนนสะสมรวม" ถึงเกณฑ์ (คะแนนไม่ลด)
 //  แก้ชื่อรางวัล/เกณฑ์ได้ตรงนี้เลย  at = คะแนนที่ต้องถึง
 // ============================================================
@@ -579,15 +625,17 @@ const FIREBASE_CONFIG = (window.FIREBASE_CONFIG && window.FIREBASE_CONFIG.projec
 // ---------- ความคืบหน้า (บันทึกในเครื่อง) ----------
 // sh = โล่ทอง, b = ตรา+โค้ดลับ, ar = วันที่ล่าสมบัติ, hi = คะแนนสะสมรวม, ls = ดีสุด/ด่าน
 // top = ตารางแชมป์ในเครื่อง, nm = ชื่อเล่น, rm = ห้อง, pid = รหัสเครื่อง, cl = รางวัลที่รับแล้ว
-let progress = { u: 1, s: {}, sh: 0, b: [], ar: "", hi: 0, ls: {}, top: [], nm: "", rm: "", pid: "", cl: {} };
+// arv = โรงเรียนที่ชม AR ครบแล้ว, arvAll = รับโบนัสครบ 10 โรงเรียนแล้ว
+let progress = { u: 1, s: {}, sh: 0, b: [], ar: "", hi: 0, ls: {}, top: [], nm: "", rm: "", pid: "", cl: {}, arv: {}, arvAll: false };
 try {
   const raw = JSON.parse(localStorage.getItem("buaDaeng100") || "{}");
   if (raw && typeof raw.u === "number") progress = {
     u: Math.min(Math.max(raw.u, 1), TOTAL), s: raw.s || {},
     sh: raw.sh || 0, b: raw.b || [], ar: raw.ar || "",
     hi: raw.hi || 0, ls: raw.ls || {}, top: Array.isArray(raw.top) ? raw.top : [], nm: raw.nm || "",
-    rm: raw.rm || "", pid: raw.pid || "", cl: raw.cl || {} };
+    rm: raw.rm || "", pid: raw.pid || "", cl: raw.cl || {}, arv: raw.arv || {}, arvAll: !!raw.arvAll };
 } catch (e) {}
+function arVisitCount() { return Object.keys(progress.arv || {}).filter(k => BADGES[k]).length; }
 if (!progress.pid) progress.pid = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 // กันข้อมูลเพี้ยน: ตารางแชมป์ต้องเรียงมาก→น้อย และไม่เกิน 10 เสมอ (qualifiesTop พึ่งพาการเรียงนี้)
 progress.top = (progress.top || []).filter(e => e && typeof e.s === "number").sort((a, b) => b.s - a.s).slice(0, 10);
@@ -784,6 +832,9 @@ function starStr(n) {
 function buildMenu() {
   $("total-stars").textContent = "⭐ " + totalStars() + "/" + TOTAL * 3 + (progress.sh ? "  •  💛×" + progress.sh : "");
   $("total-score").textContent = "🏆 คะแนนสะสม " + fmt(progress.hi || 0);
+  const av = arVisitCount();
+  $("arv-line").textContent = av >= BADGE_COUNT ? "🔭 ชม AR ครบ 10 โรงเรียนแล้ว! 🏆"
+    : "🔭 ชม AR แล้ว " + av + "/" + BADGE_COUNT + " โรงเรียน — สแกน QR ที่บูธเพื่อรับรางวัล";
   $("reg-line").innerHTML = isRegistered()
     ? "🛶 " + esc(progress.nm) + (progress.rm ? " · " + esc(progress.rm) : "") + "<span class='edit'>แก้ไข</span>"
     : "👤 แตะเพื่อลงทะเบียนชื่อ (สะสมคะแนน + แลกของรางวัล)";
@@ -2199,6 +2250,89 @@ $("code-input").addEventListener("keydown", e => { if (e.key === "Enter") $("cod
   } catch (e) {}
 })();
 
+// ============================================================
+//  🔭 ล่าแต้ม AR — สแกน QR ที่บูธ (game.html?ar=SCHOOL) → ชม AR ครบ 30 วิ → รับรางวัล
+// ============================================================
+const ARC_LEN = 2 * Math.PI * 60; // เส้นรอบวงวงแหวนนับถอยหลัง
+let arvSchool = null, arvElapsed = 0, arvTimer = 0, arvLast = 0, arvDone = false;
+function openArVisit(raw) {
+  const school = String(raw || "").trim().toUpperCase();
+  if (!BADGES[school]) { gift("❓", "QR ไม่ถูกต้อง", "ไม่พบสื่อ AR ของโรงเรียนนี้ ลองสแกน QR ที่บูธอีกครั้งนะ"); return; }
+  initAudio();
+  const b = BADGES[school];
+  arvSchool = school; arvElapsed = 0; arvDone = false; arvLast = performance.now();
+  const gc = $("arv-crest"); gc.innerHTML = "";
+  const im = new Image(); im.src = b.img; im.alt = b.name;
+  im.onerror = () => { const s = document.createElement("span"); s.textContent = b.icon; im.replaceWith(s); };
+  gc.appendChild(im);
+  $("arv-title").textContent = "ชมสื่อ AR: " + b.name;
+  const already = !!(progress.arv && progress.arv[school]);
+  $("arv-sub").textContent = already
+    ? b.full + " — รับรางวัลไปแล้ว ✓ (ชมซ้ำได้ แต่ไม่ได้รางวัลเพิ่ม)"
+    : b.full + " — ชมสื่อ AR ให้ครบ " + AR_WATCH_SEC + " วินาที เพื่อรับรางวัล";
+  const a = $("arv-open");
+  if (AR_URL[school]) { a.href = AR_URL[school]; a.style.display = "inline-block"; } else a.style.display = "none";
+  $("arv").classList.remove("hidden", "done");
+  $("arv-claim").style.display = "none";
+  $("arv-num").textContent = AR_WATCH_SEC;
+  $("arv-arc").style.strokeDasharray = ARC_LEN; $("arv-arc").style.strokeDashoffset = "0";
+  clearInterval(arvTimer);
+  arvTimer = setInterval(arvTick, 200);
+}
+function arvTick() {
+  if (arvDone || arvSchool == null) return;
+  const now = performance.now();
+  const dt = (now - arvLast) / 1000; arvLast = now;
+  if (document.hidden) { $("arv-hint").textContent = "⏸ เวลาหยุดนับ — กลับมาที่หน้านี้เพื่อชมต่อ"; return; }
+  $("arv-hint").textContent = "ถือหน้าจอนี้ไว้ระหว่างชม AR ที่บูธ — ออกจากหน้านี้เวลาจะหยุดนับ";
+  arvElapsed = Math.min(AR_WATCH_SEC, arvElapsed + dt);
+  $("arv-num").textContent = Math.ceil(AR_WATCH_SEC - arvElapsed);
+  $("arv-arc").style.strokeDashoffset = (ARC_LEN * (arvElapsed / AR_WATCH_SEC)).toFixed(1);
+  if (arvElapsed >= AR_WATCH_SEC) arvComplete();
+}
+function arvComplete() {
+  arvDone = true; clearInterval(arvTimer);
+  $("arv").classList.add("done");
+  $("arv-num").textContent = "✓";
+  const already = !!(progress.arv && progress.arv[arvSchool]);
+  $("arv-hint").textContent = already ? "ชมครบแล้ว (รับรางวัลไปก่อนหน้าแล้ว)" : "ชมครบ 30 วินาทีแล้ว! กดรับรางวัลได้เลย 🎉";
+  $("arv-claim").textContent = already ? "เรียบร้อย ✓" : "🎁 รับรางวัล!";
+  $("arv-claim").style.display = "inline-block";
+  sfx.win();
+}
+function claimArVisit() {
+  const school = arvSchool;
+  clearInterval(arvTimer);
+  $("arv").classList.add("hidden");
+  arvSchool = null;
+  if (!school || !arvDone) { openMenu(); return; }
+  if (progress.arv && progress.arv[school]) { openMenu(); return; } // เคยรับแล้ว
+  progress.arv = progress.arv || {};
+  progress.arv[school] = Date.now();
+  addShield(1);
+  progress.hi = (progress.hi || 0) + AR_REWARD_HI;
+  let bonus = "";
+  if (arVisitCount() >= BADGE_COUNT && !progress.arvAll) { progress.arvAll = true; progress.hi += AR_ALL_BONUS; bonus = " และชม AR ครบ 10 โรงเรียน! โบนัสใหญ่ +" + fmt(AR_ALL_BONUS) + " 🏆"; }
+  saveProgress(); cloudSubmitPlayer(); buildMenu();
+  gift(BADGES[school].img || BADGES[school].icon, "ได้รางวัลจากการชม AR! 🔭",
+    "โรงเรียน" + BADGES[school].name + " — 💛 โล่ทอง +1 และคะแนนสะสม +" + fmt(AR_REWARD_HI) +
+    " (ชม AR แล้ว " + arVisitCount() + "/" + BADGE_COUNT + ")" + bonus);
+}
+function closeArVisit() { clearInterval(arvTimer); arvSchool = null; $("arv").classList.add("hidden"); }
+$("arv-claim").addEventListener("click", claimArVisit);
+$("arv-close").addEventListener("click", closeArVisit);
+
+// มาจากการสแกน QR ชม AR: game.html?ar=SCHOOL
+(function () {
+  const m = (location.search || "").match(/[?&]ar=([A-Za-z]+)/);
+  if (!m) return;
+  setTimeout(() => openArVisit(decodeURIComponent(m[1])), 500);
+  try {
+    const cleaned = location.search.replace(/([?&])ar=[^&]+&?/, "$1").replace(/[?&]$/, "");
+    history.replaceState(null, "", location.pathname + cleaned);
+  } catch (e) {}
+})();
+
 // ---------- โหมดทดสอบ (เปิดด้วย ?bdtest=1 เท่านั้น) ----------
 if (/[?&]bdtest=1/.test(location.search)) {
   window.__bd = {
@@ -2209,6 +2343,8 @@ if (/[?&]bdtest=1/.test(location.search)) {
     redeem: c => redeemCode(c),
     board: () => openBoard(),
     prize: () => openPrize(),
+    arVisit: s => openArVisit(s),
+    arFinish: () => { arvElapsed = AR_WATCH_SEC; arvComplete(); },
     register: (n, r) => { progress.nm = n; progress.rm = r || ""; saveProgress(); buildMenu(); },
     setHi: v => { progress.hi = v; saveProgress(); buildMenu(); },
     addCombo: k => { for (let i = 0; i < (k || 1); i++) scoreGain(1, W / 2, H / 2); updateHUD(); },
@@ -2216,6 +2352,7 @@ if (/[?&]bdtest=1/.test(location.search)) {
       shields: progress.sh, badges: progress.b.slice(), arGot,
       runScore, combo, comboBest, comboMult: comboMult(), lastRun, hi: progress.hi, ls: progress.ls, top: progress.top,
       nm: progress.nm, rm: progress.rm, pid: progress.pid, claims: progress.cl, cloudEnabled, cloudReady,
+      arv: Object.keys(progress.arv || {}), arVisits: arVisitCount(), arvAll: progress.arvAll, arvElapsed: +arvElapsed.toFixed(1), arvDone,
       unclaimed: unclaimedCount(), pending: pendingPrizes.map(p => p.name),
       items: items.map(i => i.type), sp: { basket: sp.basket, order: sp.order && sp.order.slice(0, 3), ducks: sp.ducks && sp.ducks.map(d => d.flee), cloudX: sp.cloudX, wp: !!sp.wp, naga: sp.hist && sp.hist.length } }),
   };
