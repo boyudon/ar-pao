@@ -77,6 +77,27 @@ AFRAME.registerComponent('chromakey-material', {
     this._texture = texture;
   },
 
+  // สำคัญ: ตอน markerless.js เรียก applyPlane() ครั้งแรก วิดีโอยังไม่โหลด metadata
+  // (clip.videoWidth = 0) จึง fallback เป็น 9/16 = 0.5625 → ระนาบกว้างเกินจริง
+  // พอ metadata มาแล้วเรียก applyPlane() ซ้ำด้วย aspect จริง ถ้าไม่มี update()
+  // เรขาคณิตจะค้างที่ค่าแรก ⇒ ท่าน ผอ. ถูกยืดออกข้าง (อ้วน)
+  // เช่น หมูม่น 204/534=0.382 → ยืด 0.5625/0.382 = 1.47 เท่า
+  update: function (oldData) {
+    const mesh = this.el.getObject3D('mesh');
+    if (!mesh) return;   // ครั้งแรก init() สร้างให้แล้ว
+    if (oldData.width !== this.data.width || oldData.height !== this.data.height) {
+      mesh.geometry.dispose();
+      mesh.geometry = new THREE.PlaneGeometry(this.data.width, this.data.height);
+    }
+    const u = mesh.material && mesh.material.uniforms;
+    if (u) {
+      const c = hexToRgb01(this.data.color);
+      u.keyColor.value.set(c[0], c[1], c[2]);
+      u.similarity.value = this.data.similarity;
+      u.smoothness.value = this.data.smoothness;
+    }
+  },
+
   remove: function () {
     this.el.removeObject3D('mesh');
     if (this._texture) this._texture.dispose();
