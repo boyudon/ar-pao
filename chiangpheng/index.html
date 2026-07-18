@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>AR — ข้อมูลโดยท่าน ผอ. (โรงเรียนเชียงเพ็งวิทยา)</title>
+
+  <!-- ตัวจับ/แสดงข้อผิดพลาดบนหน้าจอ (โชว์เฉพาะเมื่อเปิดด้วย ?debug=1) -->
+  <script>
+    (function () {
+      window.__ARERR = [];
+      function render() {
+        if (!document.body) { return; }
+        var d = document.getElementById('ar-debug');
+        if (!d) {
+          d = document.createElement('div');
+          d.id = 'ar-debug';
+          d.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;' +
+            'background:rgba(170,0,0,.92);color:#fff;font:12px/1.45 monospace;' +
+            'padding:8px 10px;max-height:42vh;overflow:auto;white-space:pre-wrap;';
+          document.body.appendChild(d);
+        }
+        d.textContent = '⚠️ DEBUG (ส่งข้อความนี้ให้ผู้ดูแล)\n' + window.__ARERR.join('\n');
+      }
+      var DEBUG = /[?&]debug=1/.test(location.search || '');
+      window.__arlog = function (m) {
+        try { console.log('[AR]', m); } catch (e) {}
+        if (!DEBUG) { return; }
+        window.__ARERR.push(String(m));
+        render();
+      };
+      window.addEventListener('error', function (e) {
+        window.__arlog('JS: ' + (e.message || '') + ' @' +
+          String(e.filename || '').split('/').pop() + ':' + (e.lineno || ''));
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        var r = e.reason;
+        window.__arlog('PROMISE: ' + (r && (r.name + ' ' + (r.message || r)) || r));
+      });
+      document.addEventListener('DOMContentLoaded', function () {
+        window.__arlog('UA: ' + navigator.userAgent);
+      });
+    })();
+  </script>
+
+  <!-- A-Frame (ฉาก 3D: คลิป ผอ. ทับบนภาพถ่าย 360°) -->
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+
+  <script src="./config.js"></script>
+  <script src="../js/chromakey.js"></script>
+  <script src="../js/lotus.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+      font-family: "Sukhumvit Set", "Noto Sans Thai", "Prompt", -apple-system, sans-serif;
+      background: #1a0d14;
+    }
+    /* ภาพพื้นหลัง 360° (เต็มจอ ระหว่างโหลด) */
+    #bg {
+      position: fixed; inset: 0; z-index: 0;
+      background: #1a0d14 url('./assets/bg.jpg') center center / cover no-repeat;
+    }
+    /* ฉาก A-Frame โปร่งใส ซ้อนบนภาพ */
+    #scene { position: fixed; inset: 0; z-index: 1; }
+
+    .overlay {
+      position: fixed; inset: 0; z-index: 10;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; color: #fff; padding: 24px;
+    }
+    .hidden { display: none !important; }
+    /* ไล่สีตามตราโรงเรียน: ชมพูบานเย็น → ส้ม */
+    #intro { background: linear-gradient(160deg, rgba(166,32,82,.88) 0%, rgba(214,68,52,.84) 55%, rgba(240,124,30,.8) 100%); }
+    .icon-cam { font-size: 46px; margin-bottom: 14px; }
+    #org-name { font-size: 16px; opacity: .9; letter-spacing: .5px; margin-bottom: 6px; }
+    #app-title { font-size: 26px; font-weight: 700; line-height: 1.35; margin: 0 0 18px; text-shadow: 0 2px 12px rgba(0,0,0,.4); }
+    #intro-text { font-size: 15px; opacity: .95; max-width: 320px; line-height: 1.6; margin-bottom: 28px; }
+    #start-btn {
+      font-family: inherit; font-size: 18px; font-weight: 700;
+      color: #a62052; background: #ffd23f; border: none; border-radius: 999px;
+      padding: 16px 34px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    }
+    #start-btn:active { transform: scale(.97); }
+    #loading { background: rgba(38,14,24,.7); }
+    .spinner {
+      width: 46px; height: 46px; border-radius: 50%;
+      border: 4px solid rgba(255,255,255,.25); border-top-color: #ffd23f;
+      animation: spin 1s linear infinite; margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #hint { justify-content: flex-start; pointer-events: none; background: transparent; }
+    #hint .pill {
+      margin-top: 56px; font-size: 14px;
+      background: rgba(0,0,0,.45); padding: 9px 18px; border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ภาพพื้นหลัง 360° -->
+  <div id="bg"></div>
+
+  <!-- ฉาก 3D: คลิป ผอ. (ตัดฉากเขียว) บนฉากหลัง 360°
+       (เชียงเพ็งวิทยาไม่ใช้ดอกบัว/เรือ 3D) -->
+  <a-scene id="scene" loading-screen="enabled: false" vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    renderer="alpha: true; colorManagement: true">
+    <a-assets>
+      <img id="bgimg" src="./assets/bg.jpg" crossorigin="anonymous" />
+      <video id="clip" loop playsinline webkit-playsinline crossorigin="anonymous"></video>
+    </a-assets>
+
+    <!-- ฉากหลัง 360°: ภาพพาโนรามา (หมุนมือถือมองรอบได้)
+         markerless.js จะหมุนฉากตอนเริ่ม (world.panoU) ให้อาคารเรียนไปอยู่หลังท่าน ผอ. -->
+    <a-sky id="sky" src="#bgimg"></a-sky>
+
+    <!-- กล้องหมุนตามเซ็นเซอร์มือถือ (มองรอบ 360°) -->
+    <a-camera id="cam" position="0 1.6 0" wasd-controls-enabled="false"
+      look-controls="touchEnabled: false; mouseEnabled: false; magicWindowTrackingEnabled: true"></a-camera>
+
+    <a-entity id="director" position="0 1.2 -1.8">
+      <a-entity id="director-plane">
+        <!-- เงานุ่มใต้เท้าท่าน ผอ. (แทนแท่นยืน) — เป็น child ของระนาบวิดีโอ
+             เพื่อให้เลื่อนตาม offsetX แม้ตอนหันหน้าเข้ากล้อง (เงาอยู่ใต้เท้าเสมอ)
+             markerless.js วางตำแหน่งที่ "ระดับเท้า" ในเฟรม (config.world.feetFrac) -->
+        <a-plane id="feet-shadow" src="./assets/shadow.png" rotation="-90 0 0"
+          width="0.72" height="0.82"
+          material="shader: flat; transparent: true; opacity: 0.8; side: double; depthWrite: false"></a-plane>
+      </a-entity>
+    </a-entity>
+  </a-scene>
+
+  <!-- ใช้ค่าจาก config.js ก่อน A-Frame เริ่มทำงาน -->
+  <script>
+    (function () {
+      var c = window.AR_CONFIG || {};
+      var bg = document.getElementById('bg');
+      var bgimg = document.getElementById('bgimg');
+      var clip = document.getElementById('clip');
+      if (c.bgSrc) {
+        if (bg) bg.style.backgroundImage = "url('" + c.bgSrc + "')";
+        if (bgimg) bgimg.setAttribute('src', c.bgSrc);
+      }
+      if (c.videoSrc && clip) clip.setAttribute('src', c.videoSrc);
+    })();
+  </script>
+
+  <!-- หน้าเริ่ม -->
+  <div id="intro" class="overlay">
+    <div class="icon-cam">🏫</div>
+    <div id="org-name">โรงเรียนเชียงเพ็งวิทยา องค์การบริหารส่วนจังหวัดอุดรธานี ๑</div>
+    <h1 id="app-title">ระบบ AR แนะนำข้อมูลโดยท่าน ผอ.</h1>
+    <p id="intro-text">แตะเพื่อเริ่ม แล้วหมุนมือถือชมท่าน ผอ. แนะนำข้อมูลแบบ 360°</p>
+    <button id="start-btn">แตะเพื่อเริ่ม</button>
+  </div>
+
+  <div id="loading" class="overlay hidden">
+    <div class="spinner"></div>
+    <div id="loading-text">กำลังโหลด...</div>
+  </div>
+
+  <div id="hint" class="overlay hidden">
+    <div class="pill" id="hint-text">หมุน/ส่ายมือถือ ชมรอบ</div>
+  </div>
+
+  <script src="../js/markerless.js?v=5"></script>
+</body>
+</html>
