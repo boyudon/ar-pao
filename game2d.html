@@ -606,13 +606,13 @@ const AR_URL = { NASAI: "nasai/", PHANGNGU: "phangngu/", KUNGCHAROEN: "kungcharo
 //  🎁 ของรางวัล — ปลดล็อกเมื่อ "คะแนนสะสมรวม" ถึงเกณฑ์ (คะแนนไม่ลด)
 //  แก้ชื่อรางวัล/เกณฑ์ได้ตรงนี้เลย  at = คะแนนที่ต้องถึง
 // ============================================================
-const PRIZES = [
-  { at: 500,   icon: "🌸", name: "สติกเกอร์บัวแดง" },
-  { at: 1500,  icon: "🦆", name: "พวงกุญแจเป็ดน้อย" },
-  { at: 3000,  icon: "📓", name: "สมุดโน้ตหนองหาน" },
-  { at: 6000,  icon: "🥤", name: "กระบอกน้ำที่ระลึก" },
-  { at: 10000, icon: "👕", name: "เสื้อยืดทะเลบัวแดง" },
-  { at: 20000, icon: "🏆", name: "ของรางวัลใหญ่ประจำงาน" },
+const PRIZES = [ // ชื่อเป็นระดับกลาง ๆ (ของจริงคุณครูกำหนดหน้างาน)
+  { at: 500,   icon: "🥉", name: "รางวัลระดับ 1" },
+  { at: 1500,  icon: "🥈", name: "รางวัลระดับ 2" },
+  { at: 3000,  icon: "🥇", name: "รางวัลระดับ 3" },
+  { at: 6000,  icon: "💎", name: "รางวัลระดับ 4" },
+  { at: 10000, icon: "👑", name: "รางวัลระดับ 5" },
+  { at: 20000, icon: "🏆", name: "รางวัลใหญ่" },
 ];
 
 // ============================================================
@@ -1043,18 +1043,16 @@ function renderPrizes() {
     const st = prizeState(p);
     const row = document.createElement("div");
     row.className = "prize-row " + st;
+    // ไอเท็มลับ: ตอนล็อกไม่บอกเกณฑ์/ชื่อ ปลดล็อกแล้วค่อยเฉลย
+    const locked = st === "locked";
     let act;
     if (st === "claimed") act = "<span class='tag'>✓ รับแล้ว</span>";
     else if (st === "unlocked") act = "<button class='claim'>รับรางวัล</button>";
-    else {
-      const pct = Math.min(100, Math.floor(hi / p.at * 100));
-      act = "<span class='tag'>ขาด " + fmt(p.at - hi) + "</span>";
-      row._pct = pct;
-    }
-    row.innerHTML = "<span class='pic'>" + p.icon + "</span><span class='info'><b></b><small>ถึง " +
-      fmt(p.at) + " คะแนน</small>" + (st === "locked" ? "<div class='prbar'><i style='width:" + row._pct + "%'></i></div>" : "") +
-      "</span><span class='act'>" + act + "</span>";
-    row.querySelector(".info b").textContent = p.name;
+    else act = "<span class='tag'>🔒 ???</span>";
+    const sub = locked ? "เล่นเกม + สแกน AR ตามบูธ แล้วจะปลดล็อกเอง..." : "ยื่นคูปองแลกของกับคุณครูที่บูธ";
+    row.innerHTML = "<span class='pic'>" + (locked ? "❓" : p.icon) + "</span><span class='info'><b></b><small>" + sub +
+      "</small></span><span class='act'>" + act + "</span>";
+    row.querySelector(".info b").textContent = locked ? "ไอเท็มลับ" : p.name;
     if (st === "unlocked") row.querySelector(".claim").addEventListener("click", () => claimPrize(p));
     if (st === "claimed") { row.style.cursor = "pointer"; row.addEventListener("click", () => showCoupon(p)); }
     list.appendChild(row);

@@ -135,9 +135,9 @@ function proj(X, Y, Z) {
 // ---------- สถานะ ----------
 const S = { START: 0, PLAY: 1, OVER: 2, PAUSE: 3 };
 let state = S.START;
-let score = 0, combo = 0, hearts = 3, dist = 0, speed = 8, invuln = 0, shake = 0;
-let items = [], parts = [], floats = [], pads = [], spawnT = 0;
-const boat = { x: 0, tx: 0 };
+let score = 0, pickPts = 0, combo = 0, hearts = 3, dist = 0, speed = 8, invuln = 0, shake = 0;
+let items = [], parts = [], floats = [], pads = [], sparks = [], clouds = [], birds = [], spawnT = 0, milestone = 0;
+const boat = { x: 0, tx: 0, wake: 0 };
 let best = 0;
 try { best = +localStorage.getItem("buaDaeng3dBest") || 0; } catch (e) {}
 
@@ -166,12 +166,18 @@ function comboMult() { return 1 + Math.min(4, Math.floor(combo / 4)); }
 function makePads() {
   pads = [];
   for (let i = 0; i < 26; i++) pads.push({ x: (Math.random() * 2 - 1) * LANE * 2.4, z: 1 + Math.random() * FAR, s: .3 + Math.random() * .5, ph: Math.random() * 7 });
+  sparks = [];
+  for (let i = 0; i < 30; i++) sparks.push({ x: (Math.random() * 2 - 1) * LANE * 2.2, z: 1 + Math.random() * FAR, ph: Math.random() * 7 });
+  clouds = [];
+  for (let i = 0; i < 4; i++) clouds.push({ x: Math.random(), y: 0.18 + Math.random() * 0.4, s: 0.5 + Math.random() * 0.8, v: 0.004 + Math.random() * 0.006 });
+  birds = [];
+  for (let i = 0; i < 5; i++) birds.push({ x: Math.random(), y: 0.16 + Math.random() * 0.28, v: 0.02 + Math.random() * 0.03, ph: Math.random() * 7, s: 0.7 + Math.random() * 0.6 });
 }
 makePads();
 function start() {
   initAudio();
-  score = 0; combo = 0; hearts = 3; dist = 0; speed = 8; invuln = 0; shake = 0;
-  items = []; parts = []; floats = []; spawnT = .5; boat.x = boat.tx = 0;
+  score = 0; pickPts = 0; combo = 0; hearts = 3; dist = 0; speed = 8; invuln = 0; shake = 0; milestone = 0;
+  items = []; parts = []; floats = []; spawnT = .5; boat.x = boat.tx = 0; boat.wake = 0;
   $("start").classList.add("hidden"); $("over").classList.add("hidden");
   $("hud").classList.remove("hidden"); $("badge3d").classList.remove("hidden");
   updHUD();
@@ -207,13 +213,23 @@ cvs.addEventListener("pointerdown", () => { if (state === S.PAUSE) { state = S.P
 
 // ---------- สุ่มของลอย ----------
 function spawn() {
+  const obChance = Math.min(0.52, 0.2 + dist * 0.0012);   // อุปสรรคมากขึ้นตามระยะ
   const r = Math.random();
   let type;
-  if (r < 0.07) type = "golden";
-  else if (r < 0.07 + Math.min(0.4, 0.18 + dist * 0.0008)) type = (Math.random() < 0.6 ? "hyacinth" : "log");
-  else type = "lotus";
-  const x = (Math.random() * 2 - 1) * (LANE - 0.4);
-  items.push({ type, x, z: FAR, bob: Math.random() * 7, r: type === "log" ? 0.75 : 0.55 });
+  if (r < 0.065) type = "golden";
+  else if (r < 0.065 + obChance) {
+    const o = Math.random();
+    if (dist > 160 && o < 0.16) type = "fisher";          // เรือประมงวิ่งตัดเลน
+    else if (o < 0.42) type = "rock";                      // หินโผล่น้ำ
+    else type = (o < 0.72 ? "log" : "hyacinth");
+  } else type = "lotus";
+  const rad = type === "log" ? 0.75 : type === "rock" ? 0.7 : type === "fisher" ? 1.05 : 0.55;
+  const it = { type, x: (Math.random() * 2 - 1) * (LANE - 0.4), z: FAR, bob: Math.random() * 7, r: rad, vx: 0 };
+  // ท่อน/ผักตบ ดริฟต์ซ้ายขวาเมื่อไปไกล (หลบยากขึ้น)
+  if ((type === "log" || type === "hyacinth") && dist > 90 && Math.random() < 0.5) it.vx = (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.9);
+  // เรือประมงวิ่งตัดจากขอบหนึ่งไปอีกขอบ
+  if (type === "fisher") { const dir = Math.random() < 0.5 ? 1 : -1; it.x = -dir * (LANE + 0.2); it.vx = dir * (1.5 + Math.random() * 0.9); it.dir = dir; it.bob = Math.random() * 7; }
+  items.push(it);
 }
 function splash(x, z, color, n) {
   const p = proj(x, 0.2, z); if (!p.vis) return;
@@ -224,7 +240,7 @@ function floatTxt(x, z, txt, color) { const p = proj(x, 1.1, z); if (p.vis) floa
 function addScore(base, x, z) {
   combo++;
   const pts = base * comboMult();
-  score += pts;
+  pickPts += pts; score = Math.floor(dist) + pickPts;
   if (combo >= 4 && combo % 4 === 0) floatTxt(0, BOATZ + 2.5, "🔥 คอมโบ ×" + comboMult() + "!", "#ffd23f");
   floatTxt(x, z, "+" + pts, base >= 30 ? "#ffd23f" : "#ff9dbb");
   updHUD();
@@ -242,19 +258,27 @@ function update(dt) {
   if (keys.ArrowRight) boat.tx = Math.min(LANE, boat.tx + 5 * dt);
   boat.x += (boat.tx - boat.x) * Math.min(1, dt * 12);
 
-  speed = 8 + dist * 0.012;           // เร็วขึ้นเรื่อย ๆ
+  speed = 8 + dist * 0.014;           // เร็วขึ้นเรื่อย ๆ
   dist += speed * dt * 0.5;
-  score += 0;                          // (ระยะไม่ให้คะแนนตรง ๆ กันเฟ้อ)
+  score = Math.floor(dist) + pickPts;  // ยิ่งไกลยิ่งได้คะแนน (+พอยต์เก็บบัว)
+  boat.wake = Math.min(1, boat.wake + dt * 2);
+  // โบนัสทุก 250 เมตร
+  if (dist >= milestone + 250) { milestone += 250; pickPts += 100; score = Math.floor(dist) + pickPts; floatTxt(0, BOATZ + 2.5, "🎉 " + milestone + " ม.! +100", "#9fe0ff"); sfx.gold(); }
   if (invuln > 0) invuln -= dt;
   if (shake > 0) shake -= dt * 40;
 
   spawnT -= dt;
-  if (spawnT <= 0) { spawn(); spawnT = Math.max(0.42, 0.95 - dist * 0.0016) * (0.75 + Math.random() * 0.5); }
+  if (spawnT <= 0) { spawn(); spawnT = Math.max(0.32, 0.9 - dist * 0.0019) * (0.72 + Math.random() * 0.5); }
 
   for (let i = items.length - 1; i >= 0; i--) {
     const it = items[i];
     it.z -= speed * dt;
-    if (Math.abs(it.z - BOATZ) < 0.7 && Math.abs(it.x - boat.x) < it.r + 0.55) {
+    if (it.vx) {
+      it.x += it.vx * dt;
+      if (it.type !== "fisher" && Math.abs(it.x) > LANE - 0.2) { it.x = Math.sign(it.x) * (LANE - 0.2); it.vx *= -1; } // ดริฟต์ชนขอบแล้วเด้ง
+    }
+    const hitR = it.type === "fisher" ? it.r + 0.35 : it.r + 0.55;
+    if (Math.abs(it.z - BOATZ) < 0.72 && Math.abs(it.x - boat.x) < hitR) {
       if (it.type === "lotus" || it.type === "golden") {
         addScore(it.type === "golden" ? 30 : 10, it.x, it.z);
         splash(it.x, it.z, it.type === "golden" ? "#ffd23f" : "#ff7ba1", 12);
@@ -262,59 +286,111 @@ function update(dt) {
         items.splice(i, 1); continue;
       } else { hurt(it.x, it.z); items.splice(i, 1); if (state !== S.PLAY) return; continue; }
     }
-    if (it.z < CAM.z - 1) items.splice(i, 1);
+    if (it.z < CAM.z - 1 || Math.abs(it.x) > LANE * 2.2) items.splice(i, 1);
   }
   for (const pd of pads) { pd.z -= speed * dt; if (pd.z < CAM.z - 1) { pd.z += FAR; pd.x = (Math.random() * 2 - 1) * LANE * 2.4; } }
+  for (const sp of sparks) { sp.z -= speed * dt; if (sp.z < CAM.z - 1) { sp.z += FAR; sp.x = (Math.random() * 2 - 1) * LANE * 2.2; } }
   for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life -= dt; if (p.life <= 0) { parts.splice(i, 1); continue; } p.sx += p.vx * dt; p.sy += p.vy * dt; p.vy += 240 * dt; }
   for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.life -= dt; f.sy -= 42 * dt; if (f.life <= 0) floats.splice(i, 1); }
   updHUD();
 }
 
 // ---------- วาดฉาก 3 มิติ ----------
+let SUN = { x: 0, y: 0, r: 0 };
+function hills(hy, color, h, freq, ph) {
+  ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(0, hy + 4);
+  for (let x = 0; x <= W; x += 18) ctx.lineTo(x, hy - h * ((Math.sin(x * freq + ph) * .5 + .5) * 0.7 + (Math.sin(x * freq * 2.4 + 1) * .5 + .5) * 0.3));
+  ctx.lineTo(W, hy + 4); ctx.closePath(); ctx.fill();
+}
+function drawBirds(t, hy) {
+  ctx.strokeStyle = "rgba(30,24,42,.5)"; ctx.lineWidth = 1.8;
+  for (const b of birds) {
+    const bx = (((b.x + t * b.v) % 1.15) - 0.075) * W, by = hy * b.y, w = 7 * b.s, fl = Math.sin(t * 6 + b.ph) * 0.45 * w;
+    ctx.beginPath(); ctx.moveTo(bx - w, by + fl); ctx.quadraticCurveTo(bx, by - w * 0.5, bx, by); ctx.quadraticCurveTo(bx, by - w * 0.5, bx + w, by + fl); ctx.stroke();
+  }
+}
 function drawSky(t) {
   const hy = HORIZON;
   const g = ctx.createLinearGradient(0, 0, 0, hy);
-  g.addColorStop(0, "#3a2c66"); g.addColorStop(0.5, "#8a5a86"); g.addColorStop(1, "#f0a67a");
+  g.addColorStop(0, "#241a4d"); g.addColorStop(0.36, "#5a3a7a"); g.addColorStop(0.72, "#b56a86"); g.addColorStop(1, "#f7b174");
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, hy);
+  const sx = W * 0.66, sy = hy * 0.56, sr = Math.min(W, H) * 0.072;
+  SUN = { x: sx, y: sy, r: sr };
+  // แสงเรืองรอบดวงอาทิตย์
+  const gl = ctx.createRadialGradient(sx, sy, sr * 0.3, sx, sy, sr * 5.2);
+  gl.addColorStop(0, "rgba(255,220,170,.5)"); gl.addColorStop(1, "rgba(255,200,150,0)");
+  ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(sx, sy, sr * 5.2, 0, 6.29); ctx.fill();
+  // เมฆบาง ๆ ลอย
+  for (const c of clouds) {
+    const cx = (((c.x + t * c.v) % 1.2) - 0.1) * W, cy = hy * c.y, cs = sr * c.s;
+    ctx.fillStyle = "rgba(255,226,208,.20)";
+    for (const [ox, oy, rr] of [[-1.1, .12, .7], [0, -.2, 1], [1.05, .1, .72], [0, .18, .85]]) { ctx.beginPath(); ctx.ellipse(cx + ox * cs, cy + oy * cs, cs * rr, cs * rr * .52, 0, 0, 6.29); ctx.fill(); }
+  }
   // ดวงอาทิตย์
-  ctx.fillStyle = "rgba(255,225,180,.9)"; ctx.beginPath(); ctx.arc(W * 0.68, hy * 0.62, Math.min(W, H) * 0.07, 0, 6.29); ctx.fill();
-  // แนวต้นไม้ไกล ๆ ที่ขอบฟ้า
-  ctx.fillStyle = "rgba(40,60,55,.55)";
-  ctx.beginPath(); ctx.moveTo(0, hy);
-  for (let x = 0; x <= W; x += 26) ctx.lineTo(x, hy - 6 - (Math.sin(x * 0.05 + 1) * 0.5 + 0.5) * 16 - (Math.sin(x * 0.13) * 0.5 + 0.5) * 8);
-  ctx.lineTo(W, hy); ctx.closePath(); ctx.fill();
+  const sg = ctx.createRadialGradient(sx, sy - sr * .2, sr * .2, sx, sy, sr);
+  sg.addColorStop(0, "#fff5da"); sg.addColorStop(1, "#ffcf88");
+  ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, sr, 0, 6.29); ctx.fill();
+  drawBirds(t, hy);
+  // ภูเขา 2 ชั้น (พารัลแลกซ์)
+  hills(hy, "rgba(74,60,98,.55)", Math.min(W, H) * 0.05, 0.05, 1.0);
+  hills(hy, "rgba(38,44,70,.72)", Math.min(W, H) * 0.07, 0.075, 3.4);
+  // หมอกบางที่เส้นขอบฟ้า
+  const hz = ctx.createLinearGradient(0, hy - 20, 0, hy + 8);
+  hz.addColorStop(0, "rgba(255,222,200,0)"); hz.addColorStop(1, "rgba(255,220,200,.3)");
+  ctx.fillStyle = hz; ctx.fillRect(0, hy - 20, W, 28);
 }
 function drawWater(t) {
   const hy = HORIZON;
   const g = ctx.createLinearGradient(0, hy, 0, H);
-  g.addColorStop(0, "#b06a86"); g.addColorStop(0.25, "#7a4a86"); g.addColorStop(1, "#2a2a5a");
+  g.addColorStop(0, "#c07890"); g.addColorStop(0.18, "#8a4f88"); g.addColorStop(0.55, "#513a72"); g.addColorStop(1, "#201d46");
   ctx.fillStyle = g; ctx.fillRect(0, hy, W, H - hy);
-  // เส้นเลนตามแนวลึก (X คงที่) — ลู่เข้าหาจุดลับตา
+  // แสงสะท้อนดวงอาทิตย์บนผิวน้ำ (คอลัมน์วิบวับ)
+  for (let i = 0; i < 20; i++) {
+    const yy = hy + (i / 20) * (H - hy) * 0.72;
+    const wob = Math.sin(t * 3 + i * 0.7) * (5 + i * 1.5);
+    const ww = 12 + i * 3.4;
+    ctx.fillStyle = "rgba(255,208,150," + (0.15 * (1 - i / 20)).toFixed(3) + ")";
+    ctx.fillRect(SUN.x - ww / 2 + wob, yy, ww, 2.5 + i * 0.16);
+  }
+  // เส้นเลนตามแนวลึก (X คงที่)
   ctx.lineWidth = 1;
   for (let xi = -3; xi <= 3; xi++) {
     const x = xi / 3 * LANE;
     const a = proj(x, 0, 0.4), b = proj(x, 0, FAR);
-    if (a.vis && b.vis) { ctx.strokeStyle = "rgba(255,220,235," + (xi === 0 ? .12 : .07) + ")"; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+    if (a.vis && b.vis) { ctx.strokeStyle = "rgba(255,220,235," + (xi === 0 ? .10 : .05) + ")"; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
   }
-  // ระลอกคลื่นตามขวาง (Z คงที่) เลื่อนเข้าหาเรา
+  // ระลอกคลื่นตามขวาง เลื่อนเข้าหาเรา
   const off = (t * speed * 0.5) % 2;
   for (let z = 2 - off; z < FAR; z += 2) {
     const a = proj(-LANE * 1.6, 0, z), b = proj(LANE * 1.6, 0, z);
     if (a.vis && b.vis) {
       const k = Math.max(0, 1 - z / FAR);
-      ctx.strokeStyle = "rgba(220,190,230," + (0.03 + k * 0.10) + ")";
+      ctx.strokeStyle = "rgba(220,190,230," + (0.03 + k * 0.09).toFixed(3) + ")";
       ctx.lineWidth = 1 + k * 1.5;
       ctx.beginPath(); ctx.moveTo(a.x, a.y + Math.sin(z + t * 2) * 1.5); ctx.lineTo(b.x, b.y + Math.sin(z + 2 + t * 2) * 1.5); ctx.stroke();
     }
   }
-  // ใบบัวลอย (จุดไล่ระยะ ช่วยให้รู้สึกลึก)
+  // ประกายน้ำวิบวับไล่ระยะ
+  for (const sp of sparks) {
+    const p = proj(sp.x, 0, sp.z); if (!p.vis) continue;
+    const tw = Math.sin(t * 5 + sp.ph) * .5 + .5;
+    const rr = Math.max(1, p.scale * 0.02);
+    ctx.fillStyle = "rgba(255,242,220," + (0.55 * tw * Math.min(1, p.scale / 45)).toFixed(3) + ")";
+    ctx.fillRect(p.x - rr, p.y, rr * 2, rr);
+  }
+  // ใบบัวลอย
   for (const pd of pads) {
     const p = proj(pd.x, 0, pd.z); if (!p.vis) continue;
     const rr = pd.s * p.scale;
     if (rr < 0.6) continue;
-    ctx.fillStyle = "rgba(40,110,80,.42)";
-    ctx.beginPath(); ctx.ellipse(p.x, p.y, rr, rr * 0.5, 0, 0, 6.29); ctx.fill();
+    ctx.fillStyle = "rgba(38,105,76,.44)";
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, rr, rr * 0.5, 0, 0.4, 6.0); ctx.fill();
   }
+}
+function drawVignette() {
+  const g = ctx.createRadialGradient(W / 2, H * 0.5, Math.min(W, H) * 0.34, W / 2, H * 0.5, Math.max(W, H) * 0.78);
+  g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(8,5,20,.42)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 }
 
 // เงาใต้วัตถุ
@@ -355,10 +431,38 @@ function drawLog3D(cx, cy, s) {
   ctx.strokeStyle = "rgba(60,35,18,.6)"; ctx.lineWidth = 2; for (const ox of [-.5, 0, .45]) { ctx.beginPath(); ctx.moveTo(ox * s, -s * .18); ctx.quadraticCurveTo(ox * s + 6, 0, ox * s, s * .18); ctx.stroke(); }
   ctx.restore();
 }
+function drawRock3D(cx, cy, s) {
+  ctx.save(); ctx.translate(cx, cy);
+  ctx.strokeStyle = "rgba(255,255,255,.16)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(0, s * .38, s * 1.1, s * .28, 0, 0, 6.29); ctx.stroke(); // ระลอกน้ำรอบหิน
+  const g = ctx.createLinearGradient(0, -s, 0, s * .4); g.addColorStop(0, "#9aa0aa"); g.addColorStop(1, "#474b57");
+  ctx.fillStyle = g; ctx.beginPath();
+  ctx.moveTo(-s, s * .35); ctx.lineTo(-s * .72, -s * .28); ctx.lineTo(-s * .18, -s * .6); ctx.lineTo(s * .42, -s * .44); ctx.lineTo(s * .96, s * .12); ctx.lineTo(s * .66, s * .4); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "rgba(28,30,40,.55)"; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,.22)"; ctx.beginPath(); ctx.moveTo(-s * .18, -s * .6); ctx.lineTo(s * .12, -s * .28); ctx.lineTo(-s * .28, -s * .08); ctx.closePath(); ctx.fill(); // ไฮไลต์
+  ctx.restore();
+}
+function drawFisher3D(cx, cy, s, dir) {
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(dir >= 0 ? 1 : -1, 1);
+  ctx.fillStyle = "rgba(10,8,20,.22)"; ctx.beginPath(); ctx.ellipse(0, s * .32, s * 1.2, s * .26, 0, 0, 6.29); ctx.fill();
+  const hull = ctx.createLinearGradient(0, -s * .1, 0, s * .35); hull.addColorStop(0, "#8a6a48"); hull.addColorStop(1, "#4a3826");
+  ctx.fillStyle = hull; ctx.beginPath();
+  ctx.moveTo(-s * 1.15, 0); ctx.quadraticCurveTo(-s * .7, s * .4, 0, s * .42); ctx.quadraticCurveTo(s * .8, s * .4, s * 1.25, -s * .15); ctx.quadraticCurveTo(0, s * .05, -s * 1.15, 0); ctx.fill();
+  ctx.fillStyle = "#5a6a8a"; ctx.beginPath(); ctx.roundRect(-s * .3, -s * .78, s * .5, s * .62, s * .15); ctx.fill();
+  ctx.fillStyle = "#f2c9a0"; ctx.beginPath(); ctx.arc(-s * .05, -s * .88, s * .22, 0, 6.29); ctx.fill();
+  ctx.fillStyle = "#d9a94e"; ctx.beginPath(); ctx.moveTo(-s * .5, -s * .92); ctx.lineTo(-s * .05, -s * 1.32); ctx.lineTo(s * .42, -s * .92); ctx.closePath(); ctx.fill(); // งอบ
+  ctx.strokeStyle = "#3e2c18"; ctx.lineWidth = Math.max(1, s * .06); ctx.beginPath(); ctx.moveTo(s * .1, -s * .72); ctx.quadraticCurveTo(s * .9, -s * 1.02, s * 1.18, -s * .5); ctx.stroke();
+  ctx.restore();
+}
 
 // เรือเป็ด 3 มิติ (ตัวเรือฉายจากพิกัดโลก + เป็ดบิลบอร์ด)
 function drawBoat(t) {
   const bx = boat.x, blink = invuln > 0 && Math.floor(invuln * 10) % 2 === 0;
+  // คลื่นท้ายเรือ (widening wake)
+  const w1 = proj(bx - 0.28, 0, BOATZ - 0.9), w2 = proj(bx + 0.28, 0, BOATZ - 0.9), w3 = proj(bx - 1.15, 0, BOATZ - 3.2), w4 = proj(bx + 1.15, 0, BOATZ - 3.2);
+  if (w1.vis && w2.vis && w3.vis && w4.vis) {
+    const wg = ctx.createLinearGradient(0, w1.y, 0, w3.y); wg.addColorStop(0, "rgba(255,255,255,.20)"); wg.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = wg; ctx.beginPath(); ctx.moveTo(w1.x, w1.y); ctx.lineTo(w2.x, w2.y); ctx.lineTo(w4.x, w4.y); ctx.lineTo(w3.x, w3.y); ctx.closePath(); ctx.fill();
+  }
   shadow(bx, BOATZ, 1.15);
   // ตัวเรือแคนู 3 มิติ: หัวแหลม (ลึก +z) ท้ายแหลม (ใกล้ -z) ป่องกลาง
   const hull = [
@@ -423,6 +527,8 @@ function draw(t) {
     if (it.type === "lotus") drawLotus3D(p.x, p.y - bob, s, false, t, it.bob);
     else if (it.type === "golden") drawLotus3D(p.x, p.y - bob, s * 1.05, true, t, it.bob);
     else if (it.type === "hyacinth") drawHyacinth3D(p.x, p.y - bob, s);
+    else if (it.type === "rock") drawRock3D(p.x, p.y - bob, s);
+    else if (it.type === "fisher") drawFisher3D(p.x, p.y - bob, s, it.dir || 1);
     else drawLog3D(p.x, p.y - bob, s);
     ctx.globalAlpha = 1;
   }
@@ -431,6 +537,7 @@ function draw(t) {
   ctx.globalAlpha = 1;
   for (const f of floats) { ctx.globalAlpha = Math.max(0, f.life / f.t); ctx.font = "800 22px 'Sukhumvit Set','Noto Sans Thai',sans-serif"; ctx.textAlign = "center"; ctx.fillStyle = f.color; ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.lineWidth = 3; ctx.strokeText(f.txt, f.sx, f.sy); ctx.fillText(f.txt, f.sx, f.sy); }
   ctx.globalAlpha = 1;
+  drawVignette();
   ctx.restore();
   if (state === S.PAUSE) { ctx.fillStyle = "rgba(6,8,20,.55)"; ctx.fillRect(0, 0, W, H); ctx.fillStyle = "#fff"; ctx.font = "800 22px 'Noto Sans Thai',sans-serif"; ctx.textAlign = "center"; ctx.fillText("⏸ แตะเพื่อเล่นต่อ", W / 2, H / 2); }
 }
@@ -441,7 +548,7 @@ function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   const t = now / 1000;
   if (state === S.PLAY) update(dt);
-  else { for (const pd of pads) { pd.z -= 3 * dt; if (pd.z < CAM.z - 1) pd.z += FAR; } } // ฉากไหลเบา ๆ ตอนเมนู
+  else { for (const pd of pads) { pd.z -= 3 * dt; if (pd.z < CAM.z - 1) pd.z += FAR; } for (const sp of sparks) { sp.z -= 3 * dt; if (sp.z < CAM.z - 1) sp.z += FAR; } } // ฉากไหลเบา ๆ ตอนเมนู
   draw(t);
   requestAnimationFrame(loop);
 }
@@ -451,10 +558,11 @@ requestAnimationFrame(loop);
 if (/[?&]bdtest=1/.test(location.search)) {
   window.__bd3 = {
     start, over: () => { hearts = 0; gameOver(); },
-    spawnAt: (type, x, z) => items.push({ type, x, z: z == null ? 8 : z, bob: 0, r: type === "log" ? .75 : .55 }),
-    hitBoat: () => { const it = { type: "log", x: boat.x, z: BOATZ, bob: 0, r: .75 }; items.push(it); },
+    spawnAt: (type, x, z) => items.push({ type, x, z: z == null ? 8 : z, bob: 0, dir: 1, r: type === "log" ? .75 : type === "rock" ? .7 : type === "fisher" ? 1.05 : .55 }),
+    hitBoat: () => { items.push({ type: "log", x: boat.x, z: BOATZ, bob: 0, r: .75, vx: 0 }); },
     setDist: d => { dist = d; },
-    info: () => ({ state, score, combo, comboMult: comboMult(), hearts, dist: Math.floor(dist), speed: +speed.toFixed(1), items: items.length, best,
+    types: () => items.map(i => i.type),
+    info: () => ({ state, score, pickPts, distScore: Math.floor(dist), combo, comboMult: comboMult(), hearts, dist: Math.floor(dist), speed: +speed.toFixed(1), items: items.length, milestone, best,
       proj0: proj(0, 0, BOATZ), projFar: proj(0, 0, 30) }),
   };
 }

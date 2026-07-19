@@ -193,6 +193,7 @@
   #total-score { text-align: center; font-size: 15px; font-weight: 800; color: #ffe08a; margin: -4px 0 10px; }
   .act-row.two .btn.sb { background: linear-gradient(135deg, #ffcf3f, #f0952e); color: #5a2740; }
   #board { z-index: 36; background: rgba(20,8,16,.82); }
+  #prize { z-index: 36; background: rgba(20,8,16,.82); }
   .board-card {
     background: linear-gradient(160deg, #fff6ec, #ffe9ef); color: #5a2740;
     border-radius: 22px; padding: 20px 20px 18px; max-width: 380px; width: 100%;
@@ -304,7 +305,7 @@
     <div id="total-stars">⭐ 0/300</div>
     <div id="total-score">🏆 คะแนนสะสม 0</div>
     <div id="arv-line"></div>
-    <div class="how">🧊 โหมดผจญภัย 3 มิติ: ลากนิ้วซ้าย–ขวาบังคับเรือเป็ดน้อย พายให้ไกลที่สุด!<br />🌸 บัวแดง +10 • ⭐ บัวทอง +30 • ยิ่งไกลยิ่งได้คะแนน โบนัสทุก 250 ม.<br />หลบ 🌿 ผักตบชวา 🪵 ท่อนไม้ 🪨 หิน ⛵ เรือประมง — ชนเสียหัวใจ!<br />💛 โล่ทองกันชน 1 ครั้ง — หาจาก 📷 ล่าสมบัติ AR และ 🔑 โค้ดลับ QR<br /><a href="game2d.html" style="color:#9fd0ff">🕹 โหมดคลาสสิก 100 ด่าน (2D) ↗</a></div>
+    <div class="how">🧊 โหมดผจญภัย 3 มิติ: ลากนิ้วซ้าย–ขวาบังคับเรือเป็ดน้อย พายให้ไกลที่สุด!<br />🌸 บัวแดง +10 • ⭐ บัวทอง +30 • ยิ่งไกลยิ่งได้คะแนน โบนัสทุก 250 ม.<br />หลบ 🌿 ผักตบชวา 🪵 ท่อนไม้ 🪨 หิน ⛵ เรือประมง — ชนเสียหัวใจ!<br />🐉 <b>บอสพญานาค</b>โผล่ทุก 1,000 ม. — รอด 18 วิ รับโบนัส +500!<br />💛 โล่ทองกันชน 1 ครั้ง — หาจาก 📷 ล่าสมบัติ AR และ 🔑 โค้ดลับ QR<br /><a href="game2d.html" style="color:#9fd0ff">🕹 โหมดคลาสสิก 100 ด่าน (2D) ↗</a></div>
     <div class="act-row">
       <button id="ar-btn" class="btn ar">📷 ล่าสมบัติ AR</button>
       <button id="code-btn" class="btn qr">🔑 โค้ดลับ QR</button>
@@ -534,9 +535,9 @@ const FACTS = [
 const TOTAL = 100; // คงไว้เพื่ออ่านเซฟโหมดคลาสสิก (game2d.html)
 function diffAt(d) {
   return {
-    speed: Math.min(22, 7.5 + d * 0.013),
-    spawnInt: Math.max(0.3, 0.9 - d * 0.0018),
-    obstacle: Math.min(0.52, 0.2 + d * 0.0011),
+    speed: Math.min(24, 7.2 + d * 0.015),          // เริ่มนุ่มขึ้นนิด แต่ไต่เร็วกว่าเดิม เพดาน 24
+    spawnInt: Math.max(0.28, 0.9 - d * 0.002),     // ของลอยถี่ขึ้นไวกว่าเดิม
+    obstacle: Math.min(0.55, 0.18 + d * 0.0013),   // สัดส่วนอุปสรรคสูงสุด 55%
     golden: 0.065,
     fisher: d > 160, rock: d > 60, drift: d > 90,
   };
@@ -576,13 +577,14 @@ const AR_URL = { NASAI: "nasai/", PHANDON: "phandon/", PHANGNGU: "phangngu/", KU
 //  🎁 ของรางวัล — ปลดล็อกเมื่อ "คะแนนสะสมรวม" ถึงเกณฑ์ (คะแนนไม่ลด)
 //  แก้ชื่อรางวัล/เกณฑ์ได้ตรงนี้เลย  at = คะแนนที่ต้องถึง
 // ============================================================
-const PRIZES = [
-  { at: 500,   icon: "🌸", name: "สติกเกอร์บัวแดง" },
-  { at: 1500,  icon: "🦆", name: "พวงกุญแจเป็ดน้อย" },
-  { at: 3000,  icon: "📓", name: "สมุดโน้ตหนองหาน" },
-  { at: 6000,  icon: "🥤", name: "กระบอกน้ำที่ระลึก" },
-  { at: 10000, icon: "👕", name: "เสื้อยืดทะเลบัวแดง" },
-  { at: 20000, icon: "🏆", name: "ของรางวัลใหญ่ประจำงาน" },
+const PRIZES = [ // ชื่อเป็นระดับกลาง ๆ (ของจริงคุณครูกำหนดหน้างาน) — อยากระบุชื่อของ ค่อยแก้ตรงนี้ทีหลังได้
+  { at: 500,   icon: "🥉", name: "รางวัลระดับ 1" },
+  { at: 1500,  icon: "🥈", name: "รางวัลระดับ 2" },
+  { at: 3000,  icon: "🥇", name: "รางวัลระดับ 3" },
+  { at: 6000,  icon: "💎", name: "รางวัลระดับ 4" },
+  { at: 10000, icon: "👑", name: "รางวัลระดับ 5" },
+  { at: 20000, icon: "🏆", name: "รางวัลใหญ่" },
+  { ar: true,  icon: "🏅", name: "รางวัลพิเศษ นักสำรวจ AR 10 โรงเรียน" }, // ปลดล็อกด้วยการชม AR ครบ 10 โรงเรียน (ไม่ใช้คะแนน)
 ];
 
 // ============================================================
@@ -606,6 +608,8 @@ try {
     rm: raw.rm || "", pid: raw.pid || "", cl: raw.cl || {}, arv: raw.arv || {}, arvAll: !!raw.arvAll, rb: raw.rb || 0 };
 } catch (e) {}
 function arVisitCount() { return Object.keys(progress.arv || {}).filter(k => BADGES[k]).length; }
+function maxHearts() { return progress.arvAll ? 4 : 3; } // ชม AR ครบ 10 โรงเรียน = ❤️ ดวงที่ 4 ถาวร
+function arBoost() { return 1 + 0.1 * arVisitCount(); } // 🪷 พรบัวทอง (ไอเท็มลับจากบูธ AR): คะแนน +10%/โรงเรียน สูงสุด ×2
 if (!progress.pid) progress.pid = "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 // กันข้อมูลเพี้ยน: ตารางแชมป์ต้องเรียงมาก→น้อย และไม่เกิน 10 เสมอ (qualifiesTop พึ่งพาการเรียงนี้)
 progress.top = (progress.top || []).filter(e => e && typeof e.s === "number").sort((a, b) => b.s - a.s).slice(0, 10);
@@ -650,7 +654,7 @@ async function cloudSubmitPlayer() {
 // ส่งรายการแลกรางวัลขึ้นคลาวด์ (ครูเห็นว่าใครปลดล็อกอะไร)
 async function cloudSubmitClaim(tier, code) {
   if (!cloudReady) return;
-  const p = PRIZES.find(x => x.at === tier);
+  const p = PRIZES.find(x => (x.ar ? "AR" : x.at) === tier);
   try {
     await db.collection("claims").doc(code).set({
       code, pid: progress.pid, name: progress.nm || "", room: progress.rm || "",
@@ -668,8 +672,10 @@ async function cloudTop(n) {
 }
 
 // ---------- 🎁 ของรางวัล (ปลดล็อกตามคะแนนสะสม progress.hi) ----------
+function prizeKey(p) { return p.ar ? "AR" : p.at; }
 function prizeState(p) {
-  if (progress.cl && progress.cl[p.at]) return "claimed";
+  if (progress.cl && progress.cl[prizeKey(p)]) return "claimed";
+  if (p.ar) return (progress.arvAll || arVisitCount() >= BADGE_COUNT) ? "unlocked" : "locked";
   return (progress.hi || 0) >= p.at ? "unlocked" : "locked";
 }
 function unclaimedCount() { return PRIZES.filter(p => prizeState(p) === "unlocked").length; }
@@ -705,6 +711,7 @@ let hearts = 3, invuln = 0, shake = 0, milestone = 0, lastRun = 0;
 let items = [], parts = [], floats = [], pads = [], sparks = [], clouds = [], birds = [], drops = [], spawnT = 0;
 const boat = { x: 0, tx: 0 };
 let zPrev = ZONES[0], zCur = ZONES[0], zMix = 1; // เฟดสีตอนเปลี่ยนโซน
+let boss = null, bossNext = 1000; // 🐉 บอสพญานาคโผล่ทุก ๆ 1,000 ม.
 
 const fmt = n => (n | 0).toLocaleString("en-US");
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -757,8 +764,10 @@ function updHUD() {
   $("hud-level").textContent = fmt(score);
   $("hud-zone").textContent = "🛶 " + Math.floor(dist) + " ม. · " + zCur.name;
   $("hud-score").textContent = "💠 สะสมรวม " + fmt((progress.hi || 0) + (state === S.PLAY ? score : 0));
-  $("hearts").textContent = "💛".repeat(progress.sh) + "❤️".repeat(hearts) + "🖤".repeat(Math.max(0, 3 - hearts));
-  $("hud-goal").textContent = combo >= 4 ? "🔥 คอมโบ ×" + comboMult() : "ยิ่งไกล ยิ่งได้คะแนน";
+  $("hearts").textContent = "💛".repeat(progress.sh) + "❤️".repeat(hearts) + "🖤".repeat(Math.max(0, maxHearts() - hearts));
+  $("hud-goal").textContent = boss ? "🐉 รอดอีก " + Math.ceil(Math.max(0, BOSS_TIME - boss.t)) + " วิ!"
+    : combo >= 4 ? "🔥 คอมโบ ×" + comboMult()
+    : "ยิ่งไกล ยิ่งได้คะแนน" + (arVisitCount() ? " • 🪷×" + arBoost().toFixed(1) : "");
 }
 const updateHUD = updHUD; // ชื่อเดิม เผื่อโมดูลอื่นเรียก
 function showOnly(ids) {
@@ -786,8 +795,8 @@ function buildMenu() {
   $("total-stars").textContent = "⭐ " + totalStars() + "/" + TOTAL * 3 + (progress.sh ? "  •  💛×" + progress.sh : "");
   $("total-score").textContent = "🏆 คะแนนสะสม " + fmt(progress.hi || 0);
   const av = arVisitCount();
-  $("arv-line").textContent = av >= BADGE_COUNT ? "🔭 ชม AR ครบ 10 โรงเรียนแล้ว! 🏆"
-    : "🔭 ชม AR แล้ว " + av + "/" + BADGE_COUNT + " โรงเรียน — สแกน QR ที่บูธเพื่อรับรางวัล";
+  $("arv-line").textContent = av >= BADGE_COUNT ? "🔭 ชม AR ครบ " + BADGE_COUNT + " โรงเรียน — 🪷 พลังคะแนน ×2 + ❤️×4 ถาวร!"
+    : "🔭 ชม AR " + av + "/" + BADGE_COUNT + " โรงเรียน — สแกนที่บูธรับไอเท็มลับ 🪷 เพิ่มพลังคะแนน!";
   $("reg-line").innerHTML = isRegistered()
     ? "🛶 " + esc(progress.nm) + (progress.rm ? " · " + esc(progress.rm) : "") + "<span class='edit'>แก้ไข</span>"
     : "👤 แตะเพื่อลงทะเบียนชื่อ (สะสมคะแนน + แลกของรางวัล)";
@@ -958,18 +967,17 @@ function renderPrizes() {
     const st = prizeState(p);
     const row = document.createElement("div");
     row.className = "prize-row " + st;
+    // ไอเท็มลับ: ตอนล็อกไม่บอกเกณฑ์/ชื่อ ปลดล็อกแล้วค่อยเฉลย
+    const locked = st === "locked";
     let act;
     if (st === "claimed") act = "<span class='tag'>✓ รับแล้ว</span>";
     else if (st === "unlocked") act = "<button class='claim'>รับรางวัล</button>";
-    else {
-      const pct = Math.min(100, Math.floor(hi / p.at * 100));
-      act = "<span class='tag'>ขาด " + fmt(p.at - hi) + "</span>";
-      row._pct = pct;
-    }
-    row.innerHTML = "<span class='pic'>" + p.icon + "</span><span class='info'><b></b><small>ถึง " +
-      fmt(p.at) + " คะแนน</small>" + (st === "locked" ? "<div class='prbar'><i style='width:" + row._pct + "%'></i></div>" : "") +
-      "</span><span class='act'>" + act + "</span>";
-    row.querySelector(".info b").textContent = p.name;
+    else act = "<span class='tag'>🔒 ???</span>";
+    const sub = locked ? "เล่นเกม + สแกน AR ตามบูธ แล้วจะปลดล็อกเอง..."
+      : p.ar ? "รางวัลจากการชมสื่อ AR ครบ " + BADGE_COUNT + " โรงเรียน" : "ยื่นคูปองแลกของกับคุณครูที่บูธ";
+    row.innerHTML = "<span class='pic'>" + (locked ? "❓" : p.icon) + "</span><span class='info'><b></b><small>" + sub +
+      "</small></span><span class='act'>" + act + "</span>";
+    row.querySelector(".info b").textContent = locked ? "ไอเท็มลับ" : p.name;
     if (st === "unlocked") row.querySelector(".claim").addEventListener("click", () => claimPrize(p));
     if (st === "claimed") { row.style.cursor = "pointer"; row.addEventListener("click", () => showCoupon(p)); }
     list.appendChild(row);
@@ -978,18 +986,18 @@ function renderPrizes() {
 function openPrize() { renderPrizes(); $("prize").classList.remove("hidden"); }
 function claimPrize(p) {
   if (!isRegistered()) { openRegister(() => { $("prize").classList.remove("hidden"); claimPrize(p); }); $("prize").classList.add("hidden"); return; }
-  if (!progress.cl[p.at]) {
-    const code = couponCode(p.at);
-    progress.cl[p.at] = { code, ts: Date.now() };
+  if (!progress.cl[prizeKey(p)]) {
+    const code = couponCode(prizeKey(p));
+    progress.cl[prizeKey(p)] = { code, ts: Date.now() };
     saveProgress();
-    cloudSubmitClaim(p.at, code);
+    cloudSubmitClaim(prizeKey(p), code);
     buildMenu();
   }
   renderPrizes();
   showCoupon(p);
 }
 function showCoupon(p) {
-  const rec = progress.cl[p.at]; if (!rec) return;
+  const rec = progress.cl[prizeKey(p)]; if (!rec) return;
   $("coupon-icon").textContent = p.icon;
   $("coupon-name").textContent = p.name;
   $("coupon-who").textContent = "🛶 " + (progress.nm || "ผู้เล่น") + (progress.rm ? " · " + progress.rm : "");
@@ -1007,9 +1015,10 @@ $("coupon-close").addEventListener("click", () => $("coupon").classList.add("hid
 function startRun() {
   initAudio();
   score = 0; pickPts = 0; combo = 0; comboBest = 0; dist = 0; speed = 8;
-  hearts = 3; invuln = 0; shake = 0; milestone = 0;
+  hearts = maxHearts(); invuln = 0; shake = 0; milestone = 0;
   items = []; parts = []; floats = []; spawnT = 0.5; boat.x = boat.tx = 0;
   zPrev = zCur = zoneAt(0); zMix = 1;
+  boss = null; bossNext = 1000;
   if (!drops.length) makeRain();
   showOnly([]);
   updHUD();
@@ -1074,8 +1083,9 @@ function spawnItem() {
   const D = diffAt(dist);
   const r = Math.random();
   let type;
+  const obstacleShare = D.obstacle * (boss ? 0.25 : 1); // ช่วงบอส ลดอุปสรรคปกติ (พญานาคคือภัยหลัก)
   if (r < D.golden) type = "golden";
-  else if (r < D.golden + D.obstacle) {
+  else if (r < D.golden + obstacleShare) {
     const o = Math.random();
     if (D.fisher && o < 0.16) type = "fisher";        // เรือประมงวิ่งตัดเลน
     else if (D.rock && o < 0.42) type = "rock";        // หินโผล่น้ำ
@@ -1098,7 +1108,7 @@ function floatScreen(txt, color) { floats.push({ sx: W / 2, sy: H * 0.3, txt, co
 function gainPick(it) {
   combo++;
   if (combo > comboBest) comboBest = combo;
-  const pts = (it.type === "golden" ? 30 : 10) * comboMult();
+  const pts = Math.round((it.type === "golden" ? 30 : 10) * comboMult() * arBoost());
   pickPts += pts;
   if (combo >= 4 && combo % 4 === 0) floatScreen("🔥 คอมโบ ×" + comboMult() + "!", "#ffd23f");
   floatAt(it.x, it.z, "+" + pts, it.type === "golden" ? "#ffd23f" : "#ff9dbb");
@@ -1123,6 +1133,54 @@ function hurt(x, z) {
   if (hearts <= 0) gameOver();
 }
 
+// ---------- 🐉 บอสพญานาค (โผล่ทุก 1,000 ม. — รอดให้ครบเวลา รับโบนัสใหญ่) ----------
+const BOSS_TIME = 18, BOSS_BONUS = 500;
+function startBoss() {
+  boss = { t: 0, hist: [], spitT: 1.6, mouth: 0 };
+  floatScreen("⚠️ พญานาคปรากฏตัว!", "#ff8a8a");
+  toast("🐉 บอสพญานาค!", "หลบลำตัวให้รอด " + BOSS_TIME + " วินาที — เก็บบัวทองจากปาก!", 3000);
+  tone(70, .6, "sawtooth", .22); tone(55, .8, "sawtooth", .18, .3); // เสียงคำราม
+  shake = 10;
+}
+function bossSeg(i) { return boss && boss.hist[Math.min(i * 12, boss.hist.length - 1)]; } // ปล้องห่าง ~0.2 วิ = ลำตัวยาวจริง
+function updateBoss(dt, t) {
+  boss.t += dt;
+  // หัวพญานาค: แกว่งซ้าย-ขวา + โฉบประชิดเรือเป็นจังหวะ
+  const sweep = Math.sin(t * 0.55) * LANE * 0.7; // กวาดกว้างสุด ±2.17 — ชิดขอบ (±3.1) มีระยะปลอดภัยเสมอ
+  const dip = Math.pow(Math.max(0, Math.sin(t * 0.42)), 2);
+  const hz = 14 - dip * 14.4;                 // ไกล 14 → พุ่งทะลุระนาบเรือ (-0.4) = ชนได้จริง
+  const hy = 0.9 + Math.sin(t * 2.2) * 0.35;  // เลื้อยขึ้นลง
+  boss.hist.unshift({ x: sweep, y: hy, z: hz });
+  if (boss.hist.length > 170) boss.hist.pop();
+  if (boss.mouth > 0) boss.mouth -= dt;
+  // คายบัวทองจากปากให้ตามเก็บ
+  boss.spitT -= dt;
+  if (boss.spitT <= 0) {
+    items.push({ type: "golden", x: sweep, z: Math.max(6, hz), vx: 0, dir: 1, bob: Math.random() * 7, r: RAD.golden });
+    boss.mouth = 0.5;
+    boss.spitT = 2.2 + Math.random() * 1.2;
+    sfx.golden();
+  }
+  // ชนลำตัวพญานาค?
+  for (let i = 0; i < 14; i++) {
+    const s = bossSeg(i);
+    if (s && Math.abs(s.z - BOATZ) < 0.75 && Math.abs(s.x - boat.x) < 0.72) {
+      hurt(s.x, BOATZ);
+      if (state !== S.PLAY) return;
+      break;
+    }
+  }
+  // รอดครบเวลา → โบนัสใหญ่ แล้วพญานาคดำน้ำหนี
+  if (boss.t >= BOSS_TIME) {
+    boss = null;
+    bossNext += 1000;
+    const bb = Math.round(BOSS_BONUS * arBoost());
+    pickPts += bb;
+    floatScreen("🎉 รอดจากพญานาค! +" + bb, "#ffd23f");
+    sfx.win();
+  }
+}
+
 // ---------- อัปเดตเกม ----------
 function update(dt, t) {
   if (keys.ArrowLeft) boat.tx = Math.max(-LANE, boat.tx - 5 * dt);
@@ -1132,18 +1190,22 @@ function update(dt, t) {
   const D = diffAt(dist);
   speed = D.speed;
   dist += speed * dt * 0.5;
-  score = Math.floor(dist) + pickPts; // ยิ่งไกลยิ่งได้คะแนน + แต้มเก็บบัว
+  score = Math.floor(dist * arBoost()) + pickPts; // ยิ่งไกลยิ่งได้คะแนน + แต้มเก็บบัว (คูณ 🪷 พรบัวทอง)
   // เปลี่ยนโซนบรรยากาศตามระยะ (เฟดสี)
   const zi = zoneAt(dist);
   if (zi !== zCur) { zPrev = zCur; zCur = zi; zMix = 0; toast("🌊 " + zCur.name, "ระยะ " + Math.floor(dist) + " ม."); if (zCur.rain && !drops.length) makeRain(); }
   if (zMix < 1) zMix = Math.min(1, zMix + dt / 1.8);
   // โบนัสทุก 250 เมตร
-  if (dist >= milestone + 250) { milestone += 250; pickPts += 100; floatScreen("🎉 " + milestone + " ม.! +100", "#9fe0ff"); sfx.golden(); }
+  if (dist >= milestone + 250) { milestone += 250; const mb = Math.round(100 * arBoost()); pickPts += mb; floatScreen("🎉 " + milestone + " ม.! +" + mb, "#9fe0ff"); sfx.golden(); }
   if (invuln > 0) invuln -= dt;
   if (shake > 0) shake -= dt * 40;
 
+  // 🐉 บอสพญานาคทุก 1,000 ม.
+  if (!boss && dist >= bossNext) startBoss();
+  if (boss) { updateBoss(dt, t); if (state !== S.PLAY) return; }
+
   spawnT -= dt;
-  if (spawnT <= 0) { spawnItem(); spawnT = D.spawnInt * (0.72 + Math.random() * 0.5); }
+  if (spawnT <= 0) { spawnItem(); spawnT = D.spawnInt * (boss ? 1.6 : 1) * (0.72 + Math.random() * 0.5); }
 
   const wind = zCur.wind ? Math.sin(t * 0.7) * 0.5 : 0;
   for (let i = items.length - 1; i >= 0; i--) {
@@ -1341,6 +1403,56 @@ function drawFisher3D(cx, cy, s, dir) {
   ctx.restore();
 }
 
+// 🐉 พญานาค 3 มิติ — วาดทีละปล้องแทรกใน depth-sort (บังหน้า-หลังถูกต้อง)
+function drawNagaSeg(i, sg, t) {
+  const p = proj(sg.x, sg.y, sg.z); if (!p.vis) return;
+  const head = i === 0;
+  const r = (head ? 0.62 : 0.5 - i * 0.018) * p.scale;
+  if (r < 1) return;
+  ctx.globalAlpha = 0.3 + 0.7 * haze(sg.z);
+  shadow(sg.x, sg.z, head ? 0.7 : 0.5);
+  ctx.fillStyle = i % 2 ? "#1f7a5c" : "#26936e";
+  ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 6.29); ctx.fill();
+  ctx.strokeStyle = "rgba(255,210,63,.55)"; ctx.lineWidth = Math.max(1, r * 0.08);
+  ctx.beginPath(); ctx.arc(p.x, p.y, r, 0.4, Math.PI - 0.4); ctx.stroke();
+  if (!head && i % 3 === 0) { // ครีบหลังแดง
+    ctx.fillStyle = "#e8446a";
+    ctx.beginPath(); ctx.moveTo(p.x - r * 0.35, p.y - r * 0.85); ctx.lineTo(p.x, p.y - r * 1.5); ctx.lineTo(p.x + r * 0.35, p.y - r * 0.85); ctx.closePath(); ctx.fill();
+  }
+  if (head) drawNagaHead(p, r, t);
+  ctx.globalAlpha = 1;
+}
+function drawNagaHead(p, r, t) {
+  ctx.fillStyle = "#ffd23f"; // หงอนทอง 3 แฉก
+  for (const [ox, hh] of [[-0.55, 0.6], [0, 0.95], [0.55, 0.6]]) {
+    ctx.beginPath();
+    ctx.moveTo(p.x + (ox - 0.22) * r, p.y - r * 0.75);
+    ctx.lineTo(p.x + ox * r, p.y - r * (0.75 + hh));
+    ctx.lineTo(p.x + (ox + 0.22) * r, p.y - r * 0.75);
+    ctx.closePath(); ctx.fill();
+  }
+  for (const sx of [-0.38, 0.38]) { // ตาแดง
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(p.x + sx * r, p.y - r * 0.2, r * 0.22, 0, 6.29); ctx.fill();
+    ctx.fillStyle = "#c22040"; ctx.beginPath(); ctx.arc(p.x + sx * r, p.y - r * 0.2, r * 0.11, 0, 6.29); ctx.fill();
+  }
+  if (boss && boss.mouth > 0) { // อ้าปากคายบัวทอง
+    ctx.fillStyle = "#7a1830";
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + r * 0.45, r * 0.34, r * (0.3 + boss.mouth * 0.3), 0, 0, 6.29); ctx.fill();
+    ctx.fillStyle = "rgba(255,210,63,.45)";
+    ctx.beginPath(); ctx.arc(p.x, p.y + r * 0.55, r * (0.5 + boss.mouth * 0.4), 0, 6.29); ctx.fill();
+  } else {
+    ctx.strokeStyle = "#123c2c"; ctx.lineWidth = Math.max(1, r * 0.09);
+    ctx.beginPath(); ctx.arc(p.x, p.y + r * 0.35, r * 0.32, 0.3, Math.PI - 0.3); ctx.stroke();
+  }
+  ctx.strokeStyle = "#ffd23f"; ctx.lineWidth = Math.max(1, r * 0.07); // หนวดทอง
+  for (const d2 of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(p.x + d2 * r * 0.6, p.y + r * 0.3);
+    ctx.quadraticCurveTo(p.x + d2 * r * 1.1, p.y + r * (0.5 + Math.sin(t * 3) * 0.15), p.x + d2 * r * 0.95, p.y + r * 0.95);
+    ctx.stroke();
+  }
+}
+
 // เรือแคนู 3 มิติ + เป็ดเหลืองหนองประจักษ์ (ครบ 10 ตรา = เรือทองคำ + มงกุฎ)
 function drawBoat(t) {
   const bx = boat.x, blink = invuln > 0 && Math.floor(invuln * 10) % 2 === 0;
@@ -1422,9 +1534,11 @@ function draw(t, dt) {
   drawSky(t);
   drawWater(t);
   const list = items.map(it => ({ z: it.z, it })).concat([{ z: BOATZ, boat: true }]);
+  if (boss) for (let i = 13; i >= 0; i--) { const sg = bossSeg(i); if (sg) list.push({ z: sg.z, naga: i, sg }); }
   list.sort((a, b) => b.z - a.z); // วาดไกล → ใกล้
   for (const d of list) {
     if (d.boat) { if (state !== S.MENU) drawBoat(t); continue; }
+    if (d.naga != null) { drawNagaSeg(d.naga, d.sg, t); continue; }
     const it = d.it;
     const p = proj(it.x, 0.12, it.z); if (!p.vis) continue;
     const s = it.r * p.scale;
@@ -1733,10 +1847,16 @@ function claimArVisit() {
   addShield(1);
   progress.hi = (progress.hi || 0) + AR_REWARD_HI;
   let bonus = "";
-  if (arVisitCount() >= BADGE_COUNT && !progress.arvAll) { progress.arvAll = true; progress.hi += AR_ALL_BONUS; bonus = " และชม AR ครบ 10 โรงเรียน! โบนัสใหญ่ +" + fmt(AR_ALL_BONUS) + " 🏆"; }
+  if (arVisitCount() >= BADGE_COUNT && !progress.arvAll) {
+    progress.arvAll = true;
+    progress.hi += AR_ALL_BONUS;
+    bonus = " — 🎉 ชม AR ครบ " + BADGE_COUNT + " โรงเรียน! โบนัสใหญ่ +" + fmt(AR_ALL_BONUS) +
+      " 🏆 ปลดล็อก ❤️ หัวใจดวงที่ 4 ถาวร และ 🏅 รางวัลพิเศษนักสำรวจ AR (รับที่เมนู “ของรางวัล”)";
+  }
   saveProgress(); cloudSubmitPlayer(); buildMenu();
-  gift(BADGES[school].img || BADGES[school].icon, "ได้รางวัลจากการชม AR! 🔭",
-    "โรงเรียน" + BADGES[school].name + " — 💛 โล่ทอง +1 และคะแนนสะสม +" + fmt(AR_REWARD_HI) +
+  gift(BADGES[school].img || BADGES[school].icon, "ได้ไอเท็มลับจากการชม AR! 🪷",
+    "โรงเรียน" + BADGES[school].name + " — 🪷 พรบัวทอง: คะแนนที่เก็บในเกมคูณ ×" + arBoost().toFixed(1) +
+    " แถม 💛 โล่ทอง +1 และคะแนนสะสม +" + fmt(AR_REWARD_HI) +
     " (ชม AR แล้ว " + arVisitCount() + "/" + BADGE_COUNT + ")" + bonus);
 }
 function closeArVisit() { clearInterval(arvTimer); arvSchool = null; $("arv").classList.add("hidden"); }
@@ -1769,12 +1889,15 @@ if (/[?&]bdtest=1/.test(location.search)) {
     setHi: v => { progress.hi = v; saveProgress(); buildMenu(); },
     setShield: n => { progress.sh = n; saveProgress(); },
     setDist: d => { dist = d; },
+    bossNow: () => startBoss(),
+    setArv: n => { progress.arv = {}; Object.keys(BADGES).slice(0, n).forEach(k => progress.arv[k] = Date.now()); saveProgress(); buildMenu(); },
     spawnAt: (type, x, z) => items.push({ type, x, z: z == null ? 8 : z, vx: 0, dir: 1, bob: 0, r: RAD[type] || .55 }),
     hitBoat: () => items.push({ type: "log", x: boat.x, z: BOATZ, vx: 0, dir: 1, bob: 0, r: .75 }),
     types: () => items.map(i => i.type),
     info: () => ({ state, score, pickPts, dist: Math.floor(dist), speed: +speed.toFixed(1), combo, comboMult: comboMult(), comboBest, hearts, shields: progress.sh, milestone, zone: zCur.name,
+      bossActive: !!boss, bossT: boss ? +boss.t.toFixed(1) : 0, bossNext, bossSegs: boss ? boss.hist.length : 0,
       hi: progress.hi, rb: progress.rb || 0, lastRun, badges: progress.b.slice(), top: progress.top, nm: progress.nm, rm: progress.rm, pid: progress.pid,
-      arv: Object.keys(progress.arv || {}), arVisits: arVisitCount(), arvAll: progress.arvAll, arvElapsed: +arvElapsed.toFixed(1), arvDone,
+      arv: Object.keys(progress.arv || {}), arVisits: arVisitCount(), arvAll: progress.arvAll, arvElapsed: +arvElapsed.toFixed(1), arvDone, arBoost: arBoost(),
       unclaimed: unclaimedCount(), pending: pendingPrizes.map(p => p.name), claims: progress.cl, cloudEnabled, cloudReady, items: items.map(i => i.type) }),
   };
 }

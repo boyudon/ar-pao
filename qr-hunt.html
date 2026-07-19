@@ -50,6 +50,9 @@
     display: inline-block; font-size: 10.5px; font-weight: 800; color: #fff;
     background: #c2861a; border-radius: 999px; padding: 2px 10px; margin-bottom: 6px;
   }
+  .card.arcard { border-color: #2f9e86; background: linear-gradient(160deg, #eafaf5, #dff5ef); }
+  .card.arcard .code { color: #218a72; }
+  h2.sec { font-size: 17px; margin: 26px 0 10px; color: #3d1626; border-top: 2px dashed #e0b3c6; padding-top: 16px; }
 
   .howto {
     background: #fff; border-radius: 16px; padding: 14px 18px; margin: 22px 0 0;
@@ -76,10 +79,15 @@
     <button class="print" onclick="window.print()">🖨 พิมพ์</button>
   </div>
 
+  <h2 class="sec">🔑 QR สะสมตรา (สแกนรับทันที)</h2>
   <div class="grid" id="grid"></div>
 
+  <h2 class="sec">🔭 QR ชมสื่อ AR (ชมครบ 30 วินาที รับรางวัล)</h2>
+  <p class="sub" style="margin-top:2px">แปะไว้ที่บูธ/จุดชมสื่อ AR ของแต่ละโรงเรียน — นักเรียนสแกนแล้วชม AR ครบ 30 วินาที รับ<b>ไอเท็มลับ 🪷 พรบัวทอง: พลังเก็บคะแนนในเกม +10% ต่อโรงเรียน</b> + 💛 โล่ทอง +1 + คะแนนสะสม +250<br /><b>ชมครบทั้ง 10 โรงเรียน: พลังคะแนน ×2 + โบนัสใหญ่ +2,000 + ❤️ หัวใจดวงที่ 4 ถาวร + 🏅 รางวัลพิเศษ "นักสำรวจ AR"</b></p>
+  <div class="grid" id="ar-grid"></div>
+
   <div class="howto">
-    <b>วิธีใช้:</b> ตัดการ์ดของแต่ละโรงเรียนไปแปะที่โปสเตอร์ AR หรือบอร์ดประชาสัมพันธ์ของโรงเรียนนั้น ๆ (การ์ดสีทองคือ "โค้ดลับพิเศษ" เอาไปซ่อนที่ไหนก็ได้ เช่น ห้องสมุด มุมลับในงานกิจกรรม) • นักเรียนใช้กล้องมือถือสแกน แล้วเปิดลิงก์ เกมจะมอบตราให้อัตโนมัติ • โค้ดแต่ละอันรับซ้ำไม่ได้ • ถ้าสแกนไม่ได้ ให้เข้าเกม → ปุ่ม "🔑 โค้ดลับ QR" แล้วพิมพ์โค้ดใต้ QR แทน
+    <b>วิธีใช้:</b> พิมพ์แล้วตัดการ์ดไปแปะตามจุด — ชุด <b>🔑 สะสมตรา</b> สแกนรับตราทันที, ชุด <b>🔭 ชม AR</b> แปะที่บูธสื่อ AR นักเรียนสแกนแล้วต้องชม AR ครบ 30 วินาทีจึงรับรางวัล (เกมนับเวลาให้ ออกจากหน้าเวลาจะหยุดนับ) • การ์ดสีทองคือ "โค้ดลับพิเศษ" เอาไปซ่อนได้ • ถ้าสแกนไม่ได้ ให้เข้าเกม → ปุ่ม "🔑 โค้ดลับ QR" แล้วพิมพ์โค้ดใต้ QR แทน
   </div>
 </div>
 
@@ -102,11 +110,13 @@ const BONUS = [
   { code: "NAKA",     icon: "🐉", name: "พรจากพญานาค",   full: "โค้ดลับพิเศษ — โล่ทอง +3 💛" },
 ];
 
-function gameUrl(code) {
+function baseUrl() {
   let base = document.getElementById("base").value.trim();
   if (!base.endsWith("/")) base += "/";
-  return base + "game.html?code=" + code;
+  return base;
 }
+function gameUrl(code) { return baseUrl() + "game.html?code=" + code; }
+function arUrl(code) { return baseUrl() + "game.html?ar=" + code; }
 
 // วาด QR ลง canvas เอง (ไลบรารีในเครื่อง ไม่พึ่งอินเทอร์เน็ต/CDN)
 function drawQR(canvas, text, px) {
@@ -149,6 +159,22 @@ function build() {
     card.querySelector(".full").textContent = s.full;
     grid.appendChild(card);
     try { drawQR(card.querySelector("canvas"), gameUrl(s.code), 360); }
+    catch (e) { card.querySelector(".hint").textContent = "สร้าง QR ไม่สำเร็จ: " + e.message; }
+  }
+  // ชุด QR ชม AR 30 วินาที (เฉพาะ 10 โรงเรียน)
+  const ag = document.getElementById("ar-grid");
+  ag.innerHTML = "";
+  for (const s of SCHOOLS) {
+    const card = document.createElement("div");
+    card.className = "card arcard";
+    card.innerHTML = "<div class='ic'></div><h2></h2><p class='full'></p><canvas></canvas>" +
+      "<div class='code'>AR · " + s.code + "</div><div class='hint'>สแกน → ชม AR ครบ 30 วินาที → รับ 💛+คะแนน</div>";
+    const ic = card.querySelector(".ic");
+    if (s.img) { const im = new Image(); im.src = s.img; im.alt = s.name; im.onerror = () => { ic.textContent = s.icon; }; ic.appendChild(im); } else ic.textContent = s.icon;
+    card.querySelector("h2").textContent = "ชม AR " + s.name;
+    card.querySelector(".full").textContent = s.full;
+    ag.appendChild(card);
+    try { drawQR(card.querySelector("canvas"), arUrl(s.code), 360); }
     catch (e) { card.querySelector(".hint").textContent = "สร้าง QR ไม่สำเร็จ: " + e.message; }
   }
 }
